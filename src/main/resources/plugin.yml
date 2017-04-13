@@ -1,0 +1,13 @@
+name: CVRanks
+main: org.cubeville.cvranks.CVRanks
+author: FrediW
+version: 0.1
+
+# depend: [CVTools]
+
+commands:
+  doc:
+    description: DR rank command
+  respawn:
+    description: DM respawn command
+    
