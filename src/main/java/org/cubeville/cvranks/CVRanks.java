@@ -1,21 +1,33 @@
 package org.cubeville.cvranks;
 
+import java.io.File;
+import java.io.IOException;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,8 +40,8 @@ public class CVRanks extends JavaPlugin implements Listener
     private Set<UUID> mossgardenerActive;
     private Set<UUID> bricklayerActive;
     private Set<UUID> carpenterActive;
+    private Map<UUID, Inventory> ratpackInventories;
 
-    
     public void onEnable() {
         stonemasonActive = new HashSet<>();
         mossgardenerActive = new HashSet<>();
@@ -67,6 +79,13 @@ public class CVRanks extends JavaPlugin implements Listener
 
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(this, this);
+
+        File dataFolder = getDataFolder();
+        if(!dataFolder.exists()) dataFolder.mkdirs();
+
+        ratpackInventories = new HashMap<>();
+        Collection<? extends Player> players = Bukkit.getOnlinePlayers();
+        for(Player p: players) loadInventory(p);
     }
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -77,7 +96,12 @@ public class CVRanks extends JavaPlugin implements Listener
             senderId = senderPlayer.getUniqueId();
         }
 
-        if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp")) {
+        if(command.getName().equals("rat")) {
+            if(senderPlayer == null) return true;
+            senderPlayer.openInventory(ratpackInventories.get(senderPlayer.getUniqueId()));
+        }
+        
+        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp")) {
 
             Set<UUID> typeSet;
             String typeName;
@@ -295,5 +319,75 @@ public class CVRanks extends JavaPlugin implements Listener
         }
     }
         
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        loadInventory(player);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        System.out.println("Inventory close event");
+        if(!event.getInventory().getName().startsWith("Ratpack ")) return;
+        System.out.println("Is ratpack inventory");
+        Player player = Bukkit.getPlayerExact(event.getInventory().getName().substring(8));
+        if(player == null) {
+            event.getPlayer().sendMessage("Could no save ratpack inventory, unknown player " + event.getInventory().getName().substring(8));
+            return;
+        }
+        saveInventory(player);
+    }
+    
+    public void loadInventory(Player player) {
+        if(!player.hasPermission("cvranks.ratpack")) return;
+        
+        UUID playerId = player.getUniqueId();
+        int inventorySize = 18;
+        if(player.hasPermission("cvranks.ratpack.master")) inventorySize = 27;
+
+        if(ratpackInventories.containsKey(playerId)) {
+            if(inventorySize == ratpackInventories.get(playerId).getSize()) {
+                return;
+            }
+            ratpackInventories.remove(playerId);
+        }
+
+        Inventory inventory = Bukkit.createInventory(null, inventorySize, "Ratpack " + player.getName());
+        ratpackInventories.put(playerId, inventory);
+
+        File configFile = new File(getDataFolder(), playerId.toString());
+        if(configFile.exists()) {
+            YamlConfiguration config = new YamlConfiguration();
+            try { config.load(configFile); } catch (Exception e) {}
+            List<Map<String, Object>> itemList = (List<Map<String, Object>>) config.getList("ratpack");
+            int c = 0;
+            for(Map<String, Object> ic: itemList) {
+                if(ic != null) {
+                    ItemStack item = ItemStack.deserialize(ic);
+                    inventory.setItem(c, item);
+                }
+                c++;
+                if(c == inventorySize) break;
+            }
+        }
+    }
+
+    public void saveInventory(Player player) {
+        UUID playerId = player.getUniqueId();
+        if(!ratpackInventories.containsKey(playerId)) return;
+        List<Map<String, Object>> itemList = new ArrayList<>();
+        Inventory inventory = ratpackInventories.get(playerId);
+        for(int c = 0; c < inventory.getSize(); c++) {
+            if(inventory.getItem(c) == null) {
+                itemList.add(null);
+            }
+            else {
+                itemList.add(inventory.getItem(c).serialize());
+            }
+        }
+        YamlConfiguration config = new YamlConfiguration();        
+        config.set("ratpack", itemList);
+        try {config.save(new File(getDataFolder(), playerId.toString())); } catch (IOException e) {}
+    }
 
 }

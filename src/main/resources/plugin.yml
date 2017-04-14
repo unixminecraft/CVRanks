@@ -6,8 +6,37 @@ version: 0.1
 # depend: [CVTools]
 
 commands:
+  
   doc:
     description: DR rank command
+    permission: cvranks.dr
+    
   respawn:
     description: DM respawn command
+    permission: cvranks.respawn
+
+  rat:
+    description: Open ratpack inventory
+    default: op
+    
+permissions:
+  cvranks.service.dr:
+    description: Doctor rank
+    default: op
+
+  cvranks.death.respawn:
+    description: Respawn command
+    default: op
+
+  cvranks.service.svc:
+    description: Service master, extended doctor capabilities
+    default: op
+    
+  cvranks.ratpack:
+    description: Stores a ratpack for the player, access to /rat
+    default: op
+
+  cvranks.ratpack.master:
+    description: Additional ratpack inventory row
+    default: op
     
