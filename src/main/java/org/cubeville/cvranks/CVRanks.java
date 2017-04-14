@@ -30,6 +30,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 public class CVRanks extends JavaPlugin implements Listener
 {
@@ -40,6 +42,8 @@ public class CVRanks extends JavaPlugin implements Listener
     private Set<UUID> mossgardenerActive;
     private Set<UUID> bricklayerActive;
     private Set<UUID> carpenterActive;
+    private Set<UUID> scubaActive;
+    private Set<UUID> nightstalkerActive;
     private Map<UUID, Inventory> ratpackInventories;
 
     public void onEnable() {
@@ -47,6 +51,8 @@ public class CVRanks extends JavaPlugin implements Listener
         mossgardenerActive = new HashSet<>();
         bricklayerActive = new HashSet<>();
         carpenterActive = new HashSet<>();
+        scubaActive = new HashSet<>();
+        nightstalkerActive = new HashSet<>();
 
         deathLocation = new HashMap<>();
         
@@ -101,7 +107,7 @@ public class CVRanks extends JavaPlugin implements Listener
             senderPlayer.openInventory(ratpackInventories.get(senderPlayer.getUniqueId()));
         }
         
-        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp")) {
+        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba")) {
 
             Set<UUID> typeSet;
             String typeName;
@@ -118,9 +124,17 @@ public class CVRanks extends JavaPlugin implements Listener
                 typeSet = bricklayerActive;
                 typeName = "bricklayer";
             }
-            else { //if(typeCommand.equals("carp")) {
+            else if(typeCommand.equals("carp")) {
                 typeSet = carpenterActive;
                 typeName = "master carpenter";
+            }
+            else if(typeCommand.equals("scuba")) {
+                typeSet = scubaActive;
+                typeName = "scuba";
+            }
+            else { // if(typeCommand.equals("ns")) {
+                typeSet = nightstalkerActive;
+                typeName = "nightstalker";
             }
             
             if(args.length > 1) {
@@ -146,6 +160,8 @@ public class CVRanks extends JavaPlugin implements Listener
                         typeSet.add(senderId);
                         sender.sendMessage("§aYour " + typeName + " ability has been enabled.");
                     }
+                    if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, true);
+                    if(typeName.equals("scuba")) activateScuba(senderPlayer, true);
                 }
                 else if(args[0].equals("off")) {
                     if(typeSet.contains(senderId)) {
@@ -155,6 +171,8 @@ public class CVRanks extends JavaPlugin implements Listener
                     else {
                         sender.sendMessage("§cYour " + typeName + " ability is already disabled.");
                     }
+                    if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, false);
+                    if(typeName.equals("scuba")) activateScuba(senderPlayer, false);
                 }
                 else {
                     sender.sendMessage("§c/" + typeCommand + " [on|off]");
@@ -210,6 +228,27 @@ public class CVRanks extends JavaPlugin implements Listener
         }
         
         return false;
+    }
+
+    public void activateScuba(Player player, boolean status) {
+        if(status) {
+            PotionEffect scuba = new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1);
+            player.addPotionEffect(scuba);
+            
+        }
+        else {
+            player.removePotionEffect(PotionEffectType.WATER_BREATHING);
+        }
+    }
+
+    public void activateNightstalker(Player player, boolean status) {
+        if(status) {
+            PotionEffect ns = new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1);
+            player.addPotionEffect(ns);
+        }
+        else {
+            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+        }
     }
     
     public void docPlayer(CommandSender sender, Player player) {

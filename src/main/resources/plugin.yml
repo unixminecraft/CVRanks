@@ -17,7 +17,15 @@ commands:
 
   rat:
     description: Open ratpack inventory
-    default: op
+    permission: cvranks.ratpack
+
+  ns:
+    description: Nightstalker
+    permission: cvranks.nightstalker
+
+  scuba:
+    description: Scuba
+    permission: cvranks.scuba
     
 permissions:
   cvranks.service.dr:
