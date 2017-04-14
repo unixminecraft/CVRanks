@@ -33,6 +33,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.block.Block;
+import org.bukkit.material.MaterialData;
+import org.bukkit.TreeSpecies;
+import org.bukkit.material.Wood;
+import org.bukkit.material.Tree;
+
 public class CVRanks extends JavaPlugin implements Listener
 {
     private int uptime;
@@ -44,8 +52,10 @@ public class CVRanks extends JavaPlugin implements Listener
     private Set<UUID> carpenterActive;
     private Set<UUID> scubaActive;
     private Set<UUID> nightstalkerActive;
+    private Set<UUID> smeltActive;
     private Map<UUID, Inventory> ratpackInventories;
-
+    private Map<UUID, Integer> lastRepairs;
+    
     public void onEnable() {
         stonemasonActive = new HashSet<>();
         mossgardenerActive = new HashSet<>();
@@ -53,7 +63,8 @@ public class CVRanks extends JavaPlugin implements Listener
         carpenterActive = new HashSet<>();
         scubaActive = new HashSet<>();
         nightstalkerActive = new HashSet<>();
-
+        smeltActive = new HashSet<>();
+        
         deathLocation = new HashMap<>();
         
         lastHeals = new HashMap<>();
@@ -106,8 +117,28 @@ public class CVRanks extends JavaPlugin implements Listener
             if(senderPlayer == null) return true;
             senderPlayer.openInventory(ratpackInventories.get(senderPlayer.getUniqueId()));
         }
-        
-        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba")) {
+
+        else if(command.getName().equals("repair")) {
+            ItemStack item = senderPlayer.getItemInHand();
+            if(item == null) {
+                sender.sendMessage("Please hold the item in your main hand.");
+                return true;
+            }
+            //if(isRepairable(item) == false) {
+            //    sender.sendMessage("This item is not repairable.");
+            //}
+            if(args.length == 0) {
+            }
+            else if(args.length == 1) {
+                if(args[0].equals("cost")) {
+                    //sender.sendMessage("That item costs " + getRepairCost(senderPlayer.getItemInHand()) + " to repair.");
+                }
+                else {
+                    sender.sendMessage("repair [cost]");
+                }
+            }
+        }
+        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt")) {
 
             Set<UUID> typeSet;
             String typeName;
@@ -132,11 +163,14 @@ public class CVRanks extends JavaPlugin implements Listener
                 typeSet = scubaActive;
                 typeName = "scuba";
             }
-            else { // if(typeCommand.equals("ns")) {
+            else if(typeCommand.equals("ns")) {
                 typeSet = nightstalkerActive;
                 typeName = "nightstalker";
             }
-            
+            else { // smelt
+                typeSet = smeltActive;
+                typeName = "instasmelt";
+            }
             if(args.length > 1) {
                 sender.sendMessage("Too many arguments.");
                 sender.sendMessage("/" + typeCommand + " [on|off]");
@@ -424,9 +458,87 @@ public class CVRanks extends JavaPlugin implements Listener
                 itemList.add(inventory.getItem(c).serialize());
             }
         }
-        YamlConfiguration config = new YamlConfiguration();        
+        YamlConfiguration config = new YamlConfiguration();
         config.set("ratpack", itemList);
         try {config.save(new File(getDataFolder(), playerId.toString())); } catch (IOException e) {}
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if(event.isCancelled()) return;
+        Player player = event.getPlayer();
+        boolean smelt = smeltActive.contains(player.getUniqueId());
+        Block target = event.getBlock();
+
+        if(player.hasPermission("cvranks.mining.ps")) { // TODO: ugh, lag
+            ItemStack tool = player.getInventory().getItemInMainHand();
+            if(tool == null || tool.containsEnchantment(Enchantment.SILK_TOUCH)) return;
+            
+            int rand = (int)Math.floor(100.0D * Math.random()) + 1;
+            ItemStack drop = null;
+            int chance = -1;
+            String message = "";
+            if(target.getType() == Material.DIAMOND_ORE) {
+                if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 8;
+                drop = new ItemStack(Material.DIAMOND);
+                message = "You found an extra diamond.";
+            }
+            else if(target.getType() == Material.COAL_ORE) {
+                if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
+                else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
+                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
+                else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
+                drop = new ItemStack(Material.COAL);
+                message = "You found extra coal.";
+            }
+            else if(target.getType() == Material.IRON_ORE && smelt == false) {
+                if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
+                else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
+                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
+                drop = new ItemStack(Material.IRON_ORE);
+                message = "You found extra iron.";
+            }
+            else if(target.getType() == Material.GOLD_ORE && smelt == false) {
+                if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
+                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
+                drop = new ItemStack(Material.GOLD_ORE);
+                message = "You found extra gold.";
+            }
+            else if(target.getType() == Material.QUARTZ_ORE) {
+                if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
+                else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
+                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
+                else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
+                drop = new ItemStack(Material.QUARTZ);
+                message = "You found extra quartz";
+            }
+            if(rand <= chance) {
+                player.sendMessage(message);
+                player.getWorld().dropItemNaturally(target.getLocation(), drop);
+            }
+        }
+        if(smelt) {
+            ItemStack drop = null;
+            if(target.getType() == Material.IRON_ORE) {
+                drop = new ItemStack(Material.IRON_INGOT);
+            }
+            else if(target.getType() == Material.GOLD_ORE) {
+                drop = new ItemStack(Material.GOLD_INGOT);
+            }
+            if(drop != null) {
+                event.setCancelled(true);
+                target.setType(Material.AIR);
+                if(player.hasPermission("cvranks.mining.mp") && Math.random() < 0.15) {
+                    drop.setAmount(2);
+                    player.sendMessage("You found an extra ingot.");
+                }
+                player.getWorld().dropItemNaturally(target.getLocation(), drop);
+            }
+        }
+        if(target.getType() == Material.COAL_ORE && Math.random() < 0.02 && player.hasPermission("cvranks.mining.mp")) {
+            ItemStack drop = new ItemStack(Material.DIAMOND);
+            player.getWorld().dropItemNaturally(target.getLocation(), drop);
+            player.sendMessage("You found a diamond.");
+        }
+    }
 }

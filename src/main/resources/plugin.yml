@@ -26,6 +26,10 @@ commands:
   scuba:
     description: Scuba
     permission: cvranks.scuba
+
+  smelt:
+    description: Activate Instasmelt
+    permission: cvranks.mining.instasmelt
     
 permissions:
   cvranks.service.dr:
