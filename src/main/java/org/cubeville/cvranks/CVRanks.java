@@ -472,7 +472,7 @@ public class CVRanks extends JavaPlugin implements Listener
 
         if(player.hasPermission("cvranks.mining.ps") || player.isOp()) { // TODO: ugh, lag
             ItemStack tool = player.getInventory().getItemInMainHand();
-            if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.LOG || target.getType() != Material.LOG_2))) return;
+            if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.LOG && target.getType() != Material.LOG_2))) return;
             
             int rand = (int)Math.floor(100.0D * Math.random()) + 1;
             ItemStack drop = null;
