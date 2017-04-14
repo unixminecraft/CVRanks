@@ -1,6 +1,6 @@
 name: CVRanks
 main: org.cubeville.cvranks.CVRanks
-author: FrediW
+author: FrediW, RandomRob13
 version: 0.1
 
 # depend: [CVTools]

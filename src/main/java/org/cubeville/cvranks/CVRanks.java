@@ -177,22 +177,22 @@ public class CVRanks extends JavaPlugin implements Listener
             }
             else if(args.length == 0) {
                 if(typeSet.contains(senderId)) {
-                    sender.sendMessage("Â§aYour " + typeName + " ability is currently enabled.");
-                    sender.sendMessage("Â§aYou can toggle it with /" + typeCommand + " off");
+                    sender.sendMessage("§aYour " + typeName + " ability is currently enabled.");
+                    sender.sendMessage("§aYou can toggle it with /" + typeCommand + " off");
                 }
                 else {
-                    sender.sendMessage("Â§cYour " + typeName + " ability is currently disabled.");
-                    sender.sendMessage("Â§cYou may toggle it with /" + typeCommand + " on");
+                    sender.sendMessage("§cYour " + typeName + " ability is currently disabled.");
+                    sender.sendMessage("§cYou may toggle it with /" + typeCommand + " on");
                 }
             }
             else {
                 if(args[0].equals("on")) {
                     if(typeSet.contains(senderId)) {
-                        sender.sendMessage("Â§cYour " + typeName + " ability is already enabled.");
+                        sender.sendMessage("§cYour " + typeName + " ability is already enabled.");
                     }
                     else {
                         typeSet.add(senderId);
-                        sender.sendMessage("Â§aYour " + typeName + " ability has been enabled.");
+                        sender.sendMessage("§aYour " + typeName + " ability has been enabled.");
                     }
                     if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, true);
                     if(typeName.equals("scuba")) activateScuba(senderPlayer, true);
@@ -200,16 +200,16 @@ public class CVRanks extends JavaPlugin implements Listener
                 else if(args[0].equals("off")) {
                     if(typeSet.contains(senderId)) {
                         typeSet.remove(senderId);
-                        sender.sendMessage("Â§aYour " + typeName + " ability has been disabled.");
+                        sender.sendMessage("§aYour " + typeName + " ability has been disabled.");
                     }
                     else {
-                        sender.sendMessage("Â§cYour " + typeName + " ability is already disabled.");
+                        sender.sendMessage("§cYour " + typeName + " ability is already disabled.");
                     }
                     if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, false);
                     if(typeName.equals("scuba")) activateScuba(senderPlayer, false);
                 }
                 else {
-                    sender.sendMessage("Â§c/" + typeCommand + " [on|off]");
+                    sender.sendMessage("§c/" + typeCommand + " [on|off]");
                 }
             }
             return true;
@@ -470,9 +470,9 @@ public class CVRanks extends JavaPlugin implements Listener
         boolean smelt = smeltActive.contains(player.getUniqueId());
         Block target = event.getBlock();
 
-        if(player.hasPermission("cvranks.mining.ps")) { // TODO: ugh, lag
+        if(player.hasPermission("cvranks.mining.ps") || player.isOp()) { // TODO: ugh, lag
             ItemStack tool = player.getInventory().getItemInMainHand();
-            if(tool == null || tool.containsEnchantment(Enchantment.SILK_TOUCH)) return;
+            if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.LOG || target.getType() != Material.LOG_2))) return;
             
             int rand = (int)Math.floor(100.0D * Math.random()) + 1;
             ItemStack drop = null;
@@ -511,9 +511,37 @@ public class CVRanks extends JavaPlugin implements Listener
                 else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
                 drop = new ItemStack(Material.QUARTZ);
                 message = "You found extra quartz";
+            } 
+            else if(target.getType() == Material.GRAVEL) {
+                if(tool.getType() == Material.STONE_SPADE) chance = 4;
+                else if(tool.getType() == Material.IRON_SPADE) chance = 8;
+                else if(tool.getType() == Material.DIAMOND_SPADE) chance = 16;
+                else if(tool.getType() == Material.GOLD_SPADE) chance = 24;
+                drop = new ItemStack(Material.FLINT);
+                message = "You found extra flint";
+            }
+            else if(target.getType() == Material.LOG || target.getType() == Material.LOG_2) {
+                if (target.getType() == Material.LOG) {
+                    if(tool.getType() == Material.STONE_AXE) chance = 4;
+                    else if(tool.getType() == Material.IRON_AXE) chance = 8;
+                    else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
+                    else if(tool.getType() == Material.GOLD_AXE) chance = 24;
+                    drop = new ItemStack(Material.LOG);
+                    drop.setDurability((short)target.getData());
+                    message = "You found extra wood";
+                } else {
+                    if(tool.getType() == Material.STONE_AXE) chance = 4;
+                    else if(tool.getType() == Material.IRON_AXE) chance = 8;
+                    else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
+                    else if(tool.getType() == Material.GOLD_AXE) chance = 24;
+                    drop = new ItemStack(Material.LOG_2);
+                    drop.setDurability((short)target.getData());
+                    message = "You found extra wood";
+                }
+                
             }
             if(rand <= chance) {
-                player.sendMessage(message);
+                player.sendMessage("§a" + message);
                 player.getWorld().dropItemNaturally(target.getLocation(), drop);
             }
         }
