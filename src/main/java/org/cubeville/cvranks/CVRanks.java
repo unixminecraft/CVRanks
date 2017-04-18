@@ -80,7 +80,7 @@ public class CVRanks extends JavaPlugin implements Listener
                             recov = true;
                         }
                         else if(t > 600) {
-                            if(p != null && p.hasPermission("cvranks.service.svc")) {
+                            if(p != null && p.hasPermission("cvranks.service.dr.master")) {
                                 recov = true;
                             }
                         }
@@ -177,22 +177,22 @@ public class CVRanks extends JavaPlugin implements Listener
             }
             else if(args.length == 0) {
                 if(typeSet.contains(senderId)) {
-                    sender.sendMessage("§aYour " + typeName + " ability is currently enabled.");
-                    sender.sendMessage("§aYou can toggle it with /" + typeCommand + " off");
+                    sender.sendMessage("Â§aYour " + typeName + " ability is currently enabled.");
+                    sender.sendMessage("Â§aYou can toggle it with /" + typeCommand + " off");
                 }
                 else {
-                    sender.sendMessage("§cYour " + typeName + " ability is currently disabled.");
-                    sender.sendMessage("§cYou may toggle it with /" + typeCommand + " on");
+                    sender.sendMessage("Â§cYour " + typeName + " ability is currently disabled.");
+                    sender.sendMessage("Â§cYou may toggle it with /" + typeCommand + " on");
                 }
             }
             else {
                 if(args[0].equals("on")) {
                     if(typeSet.contains(senderId)) {
-                        sender.sendMessage("§cYour " + typeName + " ability is already enabled.");
+                        sender.sendMessage("Â§cYour " + typeName + " ability is already enabled.");
                     }
                     else {
                         typeSet.add(senderId);
-                        sender.sendMessage("§aYour " + typeName + " ability has been enabled.");
+                        sender.sendMessage("Â§aYour " + typeName + " ability has been enabled.");
                     }
                     if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, true);
                     if(typeName.equals("scuba")) activateScuba(senderPlayer, true);
@@ -200,16 +200,16 @@ public class CVRanks extends JavaPlugin implements Listener
                 else if(args[0].equals("off")) {
                     if(typeSet.contains(senderId)) {
                         typeSet.remove(senderId);
-                        sender.sendMessage("§aYour " + typeName + " ability has been disabled.");
+                        sender.sendMessage("Â§aYour " + typeName + " ability has been disabled.");
                     }
                     else {
-                        sender.sendMessage("§cYour " + typeName + " ability is already disabled.");
+                        sender.sendMessage("Â§cYour " + typeName + " ability is already disabled.");
                     }
                     if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, false);
                     if(typeName.equals("scuba")) activateScuba(senderPlayer, false);
                 }
                 else {
-                    sender.sendMessage("§c/" + typeCommand + " [on|off]");
+                    sender.sendMessage("Â§c/" + typeCommand + " [on|off]");
                 }
             }
             return true;
@@ -400,23 +400,21 @@ public class CVRanks extends JavaPlugin implements Listener
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        System.out.println("Inventory close event");
-        if(!event.getInventory().getName().startsWith("Ratpack ")) return;
-        System.out.println("Is ratpack inventory");
+        if(!event.getInventory().getName().startsWith("Packrat ")) return;
         Player player = Bukkit.getPlayerExact(event.getInventory().getName().substring(8));
         if(player == null) {
-            event.getPlayer().sendMessage("Could no save ratpack inventory, unknown player " + event.getInventory().getName().substring(8));
+            event.getPlayer().sendMessage("Could no save packrat inventory, unknown player " + event.getInventory().getName().substring(8));
             return;
         }
         saveInventory(player);
     }
     
     public void loadInventory(Player player) {
-        if(!player.hasPermission("cvranks.ratpack")) return;
+        if(!player.hasPermission("cvranks.death.ratpack")) return;
         
         UUID playerId = player.getUniqueId();
         int inventorySize = 18;
-        if(player.hasPermission("cvranks.ratpack.master")) inventorySize = 27;
+        if(player.hasPermission("cvranks.death.ratpack.master")) inventorySize = 27;
 
         if(ratpackInventories.containsKey(playerId)) {
             if(inventorySize == ratpackInventories.get(playerId).getSize()) {
@@ -425,7 +423,7 @@ public class CVRanks extends JavaPlugin implements Listener
             ratpackInventories.remove(playerId);
         }
 
-        Inventory inventory = Bukkit.createInventory(null, inventorySize, "Ratpack " + player.getName());
+        Inventory inventory = Bukkit.createInventory(null, inventorySize, "Packrat " + player.getName());
         ratpackInventories.put(playerId, inventory);
 
         File configFile = new File(getDataFolder(), playerId.toString());
@@ -491,19 +489,6 @@ public class CVRanks extends JavaPlugin implements Listener
                 drop = new ItemStack(Material.COAL);
                 message = "You found extra coal.";
             }
-            else if(target.getType() == Material.IRON_ORE && smelt == false) {
-                if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
-                else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
-                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                drop = new ItemStack(Material.IRON_ORE);
-                message = "You found extra iron.";
-            }
-            else if(target.getType() == Material.GOLD_ORE && smelt == false) {
-                if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
-                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                drop = new ItemStack(Material.GOLD_ORE);
-                message = "You found extra gold.";
-            }
             else if(target.getType() == Material.QUARTZ_ORE) {
                 if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
                 else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
@@ -527,7 +512,7 @@ public class CVRanks extends JavaPlugin implements Listener
                     else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
                     else if(tool.getType() == Material.GOLD_AXE) chance = 24;
                     drop = new ItemStack(Material.LOG);
-                    drop.setDurability((short)target.getData());
+                    drop.setDurability((short) (target.getData() % 4));
                     message = "You found extra wood";
                 } else {
                     if(tool.getType() == Material.STONE_AXE) chance = 4;
@@ -535,13 +520,12 @@ public class CVRanks extends JavaPlugin implements Listener
                     else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
                     else if(tool.getType() == Material.GOLD_AXE) chance = 24;
                     drop = new ItemStack(Material.LOG_2);
-                    drop.setDurability((short)target.getData());
+                    drop.setDurability((short) (target.getData() % 4));
                     message = "You found extra wood";
                 }
-                
             }
             if(rand <= chance) {
-                player.sendMessage("§a" + message);
+                player.sendMessage("" + message);
                 player.getWorld().dropItemNaturally(target.getLocation(), drop);
             }
         }

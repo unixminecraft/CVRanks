@@ -9,27 +9,43 @@ commands:
   
   doc:
     description: DR rank command
-    permission: cvranks.dr
+    permission: cvranks.service.dr
     
   respawn:
     description: DM respawn command
-    permission: cvranks.respawn
+    permission: cvranks.death.respawn
 
   rat:
     description: Open ratpack inventory
-    permission: cvranks.ratpack
+    permission: cvranks.death.ratpack
 
   ns:
     description: Nightstalker
-    permission: cvranks.nightstalker
+    permission: cvranks.mining.nightstalker
 
   scuba:
     description: Scuba
-    permission: cvranks.scuba
+    permission: cvranks.service.scuba
 
   smelt:
     description: Activate Instasmelt
     permission: cvranks.mining.instasmelt
+
+  mason:
+    description: Activate stonemason
+    permission: cvranks.build.stonemason
+
+  mg:
+    description: Moss gardener
+    permission: cvranks.build.mossgardener
+
+  brick:
+    description: Brick layer
+    permission: cvranks.build.bricklayer
+
+  carp:
+    description: Master Carpenter command
+    permission: cvranks.build.carpenter
     
 permissions:
   cvranks.service.dr:
@@ -40,15 +56,11 @@ permissions:
     description: Respawn command
     default: op
 
-  cvranks.service.svc:
-    description: Service master, extended doctor capabilities
-    default: op
-    
-  cvranks.ratpack:
+  cvranks.death.ratpack:
     description: Stores a ratpack for the player, access to /rat
     default: op
 
-  cvranks.ratpack.master:
+  cvranks.death.ratpack.master:
     description: Additional ratpack inventory row
     default: op
     
