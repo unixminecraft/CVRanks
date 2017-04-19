@@ -26,6 +26,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
@@ -41,7 +42,7 @@ import org.bukkit.TreeSpecies;
 import org.bukkit.material.Wood;
 import org.bukkit.material.Tree;
 
-public class CVRanks extends JavaPlugin implements Listener
+public class Test extends JavaPlugin implements Listener
 {
     private int uptime;
     private Map<UUID, Integer> lastHeals;
@@ -283,6 +284,12 @@ public class CVRanks extends JavaPlugin implements Listener
         else {
             player.removePotionEffect(PotionEffectType.NIGHT_VISION);
         }
+    }
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        if (scubaActive.contains(uuid)) activateScuba(player, true);
+        if (nightstalkerActive.contains(uuid))activateNightstalker(player, true);
     }
     
     public void docPlayer(CommandSender sender, Player player) {
