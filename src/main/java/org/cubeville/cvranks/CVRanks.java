@@ -76,20 +76,8 @@ public class CVRanks extends JavaPlugin implements Listener
                     uptime += 10;
                     for(UUID player: lastHeals.keySet()) {
                         Player p = getServer().getPlayer(player);
-                        int t = uptime - lastHeals.get(player);
-                        boolean recov = false;
-                        if(t > 1200) {
-                            recov = true;
-                        }
-                        else if(t > 600) {
-                            if(p != null && p.hasPermission("cvranks.service.dr.master")) {
-                                recov = true;
-                            }
-                        }
-                        if(recov) {
-                            if(p != null) {
-                                p.sendMessage("Your doctor ability is ready to use.");
-                            }
+                        if(p == null || docTime(p) <= 0) {
+                            if(p != null) p.sendMessage("Your doctor ability is ready to use.");
                             lastHeals.remove(player);
                         }
                     }
@@ -219,8 +207,8 @@ public class CVRanks extends JavaPlugin implements Listener
         
         else if (command.getName().equals("doc")) {
             if(args.length == 0) {
-                sender.sendMessage("Doctor Command List"); // TODO: dark green
-                sender.sendMessage("----------------------"); // ^
+                sender.sendMessage("§2Doctor Command List"); // TODO: dark green
+                sender.sendMessage("§2----------------------"); // ^
                 sender.sendMessage("/doc list - Lists online doctors and their recharge timers"); // TODO: light green
                 sender.sendMessage("/doc me - Heals yourself");
                 sender.sendMessage("/doc <player> - Heals another player");
@@ -231,32 +219,45 @@ public class CVRanks extends JavaPlugin implements Listener
             }
             else {
                 if(args[0].equals("list")) {
-                    for (Player p : getServer().getOnlinePlayers()){
-                        UUID playerUUID = p.getUniqueId();
-                        String docName = p.getName();
-                        int docTime = lastHeals.get(playerUUID).intValue();
-                        if ((lastHeals.containsKey(playerUUID) || p.hasPermission("cv.service.dr.master")) && !p.hasPermission("cv.service.dr.hidefromlist")) {
-                            if (lastHeals.containsKey(playerUUID)) {
-                                sender.sendMessage(docName + "has" + docTime + "hours left.");
+                    boolean found = false;
+                    for (Player p : getServer().getOnlinePlayers()) {
+                        if(p.hasPermission("cvranks.service.dr") == true && p.hasPermission("cvranks.service.dr.hidefromlist") == false && senderPlayer.canSee(p) == true) {
+                            found = true;
+                            UUID playerId = p.getUniqueId();
+                            String docName = p.getDisplayName();
+                            if (lastHeals.containsKey(playerId)) {
+                                int t = docTime(p) / 50;
+                                sender.sendMessage("§c" + docName + " - " + t + " hours left.");
                             } else {
-                                sender.sendMessage(docName + "is available to doc!");
+                                sender.sendMessage("§a " + docName + " - ready");
                             }
                         }
                     }
+                    if(found == false) sender.sendMessage("§cNo doctors online.");
                 }
                 else if(args[0].equals("me")) {
                     if(senderPlayer != null) {
-                        docPlayer(sender, senderPlayer);
+                        if(!senderPlayer.hasPermission("cvranks.service.dr")) {
+                            sender.sendMessage("§cNo permission.");
+                        }
+                        else {
+                            docPlayer(sender, senderPlayer);
+                        }
                     }
                 }
                 else {
-                    String playerName = args[0];
-                    Player player = getServer().getPlayer(playerName);
-                    if(player == null) {
-                        sender.sendMessage("No players by that name found.");
+                    if(!senderPlayer.hasPermission("cvranks.service.dr")) {
+                        sender.sendMessage("§cNo permission.");
                     }
                     else {
-                        docPlayer(sender, player);
+                        String playerName = args[0];
+                        Player player = getServer().getPlayer(playerName);
+                        if(player == null || senderPlayer.canSee(player) == false) {
+                            sender.sendMessage("§cPlayer not found.");
+                        } 
+                        else {
+                            docPlayer(sender, player);
+                        }
                     }
                 }
             }
@@ -305,6 +306,16 @@ public class CVRanks extends JavaPlugin implements Listener
         scubaActive.remove(uuid);
         nightstalkerActive.remove(uuid);
     }
+
+    public int docTime(Player player) {
+        // player's doc interval
+        int rtime = 1200;
+        if(player.hasPermission("cvranks.service.dr.master")) rtime = 600;
+        // time since last heal
+        int htime = uptime - lastHeals.get(player.getUniqueId());
+        // time until next available heal
+        return rtime - htime;
+    }
     
     public void docPlayer(CommandSender sender, Player player) {
         boolean used = false;
@@ -314,7 +325,7 @@ public class CVRanks extends JavaPlugin implements Listener
         if(sender instanceof Player) {
             Player p = (Player) sender;
             if(lastHeals.containsKey(p.getUniqueId())) {
-                sender.sendMessage("Your doctor ability is not ready to use yet.");
+                sender.sendMessage("§cYour doctor ability is not ready to use yet.");
                 return;
             }
             if(p.getUniqueId().equals(player.getUniqueId())) {
@@ -331,7 +342,7 @@ public class CVRanks extends JavaPlugin implements Listener
         if (player.getHealth() < player.getMaxHealth()) {
             used = true;
             player.setHealth(player.getMaxHealth());
-            player.sendMessage("You have been healed by " + senderName + ".");
+            player.sendMessage("§aYou have been healed by " + senderName + ".");
         }
 
         if (player.getFoodLevel() < 20) {
@@ -339,19 +350,19 @@ public class CVRanks extends JavaPlugin implements Listener
             player.setFoodLevel(20);
             player.setExhaustion(1.0F);
             player.setSaturation(5.0F);
-            player.sendMessage("Your hunger has been refilled by " + senderName + ".");
+            player.sendMessage("§aYour hunger has been refilled by " + senderName + ".");
         }
 
         if(sender.hasPermission("cvranks.service.svc")) {
             if (player.getFireTicks() > 0) {
                 used = true;
                 player.setFireTicks(0);
-                player.sendMessage("You have been extinguished by " + senderName + ".");
+                player.sendMessage("§aYou have been extinguished by " + senderName + ".");
             }
             if (player.getRemainingAir() < player.getMaximumAir()) {
                 used = true;
                 player.setRemainingAir(player.getMaximumAir());
-                player.sendMessage("Your air has been refilled by " + senderName + ".");
+                player.sendMessage("§aYour air has been refilled by " + senderName + ".");
             }
         }
 
@@ -424,7 +435,7 @@ public class CVRanks extends JavaPlugin implements Listener
         if(!event.getInventory().getName().startsWith("Packrat ")) return;
         Player player = Bukkit.getPlayerExact(event.getInventory().getName().substring(8));
         if(player == null) {
-            event.getPlayer().sendMessage("Could no save packrat inventory, unknown player " + event.getInventory().getName().substring(8));
+            event.getPlayer().sendMessage("§cCould not save packrat inventory, unknown player " + event.getInventory().getName().substring(8));
             return;
         }
         saveInventory(player);
@@ -500,7 +511,7 @@ public class CVRanks extends JavaPlugin implements Listener
             if(target.getType() == Material.DIAMOND_ORE) {
                 if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 8;
                 drop = new ItemStack(Material.DIAMOND);
-                message = "You found an extra diamond.";
+                message = "§aYou found an extra diamond.";
             }
             else if(target.getType() == Material.COAL_ORE) {
                 if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
@@ -508,7 +519,7 @@ public class CVRanks extends JavaPlugin implements Listener
                 else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
                 else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
                 drop = new ItemStack(Material.COAL);
-                message = "You found extra coal.";
+                message = "§aYou found extra coal.";
             }
             else if(target.getType() == Material.QUARTZ_ORE) {
                 if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
@@ -516,7 +527,7 @@ public class CVRanks extends JavaPlugin implements Listener
                 else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
                 else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
                 drop = new ItemStack(Material.QUARTZ);
-                message = "You found extra quartz";
+                message = "§aYou found extra quartz";
             } 
             else if(target.getType() == Material.GRAVEL) {
                 if(tool.getType() == Material.STONE_SPADE) chance = 4;
@@ -524,7 +535,7 @@ public class CVRanks extends JavaPlugin implements Listener
                 else if(tool.getType() == Material.DIAMOND_SPADE) chance = 16;
                 else if(tool.getType() == Material.GOLD_SPADE) chance = 24;
                 drop = new ItemStack(Material.FLINT);
-                message = "You found extra flint";
+                message = "§aYou found extra flint";
             }
             else if(target.getType() == Material.LOG || target.getType() == Material.LOG_2) {
                 if (target.getType() == Material.LOG) {
@@ -534,7 +545,7 @@ public class CVRanks extends JavaPlugin implements Listener
                     else if(tool.getType() == Material.GOLD_AXE) chance = 24;
                     drop = new ItemStack(Material.LOG);
                     drop.setDurability((short) (target.getData() % 4));
-                    message = "You found extra wood";
+                    message = "§aYou found extra wood";
                 } else {
                     if(tool.getType() == Material.STONE_AXE) chance = 4;
                     else if(tool.getType() == Material.IRON_AXE) chance = 8;
@@ -542,7 +553,7 @@ public class CVRanks extends JavaPlugin implements Listener
                     else if(tool.getType() == Material.GOLD_AXE) chance = 24;
                     drop = new ItemStack(Material.LOG_2);
                     drop.setDurability((short) (target.getData() % 4));
-                    message = "You found extra wood";
+                    message = "§aYou found extra wood";
                 }
             }
             if(rand <= chance) {
@@ -563,7 +574,7 @@ public class CVRanks extends JavaPlugin implements Listener
                 target.setType(Material.AIR);
                 if(player.hasPermission("cvranks.mining.mp") && Math.random() < 0.15) {
                     drop.setAmount(2);
-                    player.sendMessage("You found an extra ingot.");
+                    player.sendMessage("§aYou found an extra ingot.");
                 }
                 player.getWorld().dropItemNaturally(target.getLocation(), drop);
             }
@@ -571,7 +582,7 @@ public class CVRanks extends JavaPlugin implements Listener
         if(target.getType() == Material.COAL_ORE && Math.random() < 0.02 && player.hasPermission("cvranks.mining.mp")) {
             ItemStack drop = new ItemStack(Material.DIAMOND);
             player.getWorld().dropItemNaturally(target.getLocation(), drop);
-            player.sendMessage("You found a diamond.");
+            player.sendMessage("§aYou found a diamond.");
         }
     }
 }

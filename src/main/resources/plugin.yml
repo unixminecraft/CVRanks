@@ -9,7 +9,6 @@ commands:
   
   doc:
     description: DR rank command
-    permission: cvranks.service.dr
     
   respawn:
     description: DM respawn command
