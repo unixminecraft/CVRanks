@@ -359,7 +359,7 @@ public class CVRanks extends JavaPlugin implements Listener
         }
         else if(material == Material.CLAY) {
             if(bricklayerActive.contains(playerId))
-                event.getBlockPlaced().setType(Material.CLAY_BRICK);
+                event.getBlockPlaced().setType(Material.BRICK);
         }
         else if(material == Material.SAND) {
             if(carpenterActive.contains(playerId))
