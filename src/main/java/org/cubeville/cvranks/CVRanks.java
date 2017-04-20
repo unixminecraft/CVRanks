@@ -25,6 +25,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.FurnaceExtractEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -499,7 +500,6 @@ public class CVRanks extends JavaPlugin implements Listener
         Player player = event.getPlayer();
         boolean smelt = smeltActive.contains(player.getUniqueId());
         Block target = event.getBlock();
-
         if(player.hasPermission("cvranks.mining.ps")) { // TODO: ugh, lag
             ItemStack tool = player.getInventory().getItemInMainHand();
             if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.LOG && target.getType() != Material.LOG_2))) return;
@@ -508,6 +508,7 @@ public class CVRanks extends JavaPlugin implements Listener
             ItemStack drop = null;
             int chance = -1;
             String message = "";
+            
             if(target.getType() == Material.DIAMOND_ORE) {
                 if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 8;
                 drop = new ItemStack(Material.DIAMOND);
@@ -572,10 +573,13 @@ public class CVRanks extends JavaPlugin implements Listener
             if(drop != null) {
                 event.setCancelled(true);
                 target.setType(Material.AIR);
+                int exp = 0;
                 if(player.hasPermission("cvranks.mining.mp") && Math.random() < 0.15) {
+                    exp = 1;
                     drop.setAmount(2);
                     player.sendMessage("§aYou found an extra ingot.");
                 }
+                player.giveExp(exp);
                 player.getWorld().dropItemNaturally(target.getLocation(), drop);
             }
         }
