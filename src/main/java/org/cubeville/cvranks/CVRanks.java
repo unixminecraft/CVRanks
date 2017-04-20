@@ -276,12 +276,7 @@ public class CVRanks extends JavaPlugin implements Listener
         
         return false;
     }
-    public Player getPlayerByUuid(UUID uuid) {
-        for(Player p : getServer().getOnlinePlayers())
-            if(p.getUniqueId().equals(uuid)) {
-                return p;
-            } 
-        }
+
     public void activateScuba(Player player, boolean status) {
         if(status) {
             PotionEffect scuba = new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1);
@@ -302,18 +297,20 @@ public class CVRanks extends JavaPlugin implements Listener
             player.removePotionEffect(PotionEffectType.NIGHT_VISION);
         }
     }
+
+    @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        if (scubaActive.contains(uuid)) activateScuba(player, true);
-        if (nightstalkerActive.contains(uuid))activateNightstalker(player, true);
+        scubaActive.remove(uuid);
+        nightstalkerActive.remove(uuid);
     }
     
     public void docPlayer(CommandSender sender, Player player) {
         boolean used = false;
 
         String senderName;
-        // TODO: maybe "yourself" or something like that if same player?
+
         if(sender instanceof Player) {
             Player p = (Player) sender;
             if(lastHeals.containsKey(p.getUniqueId())) {
@@ -492,7 +489,7 @@ public class CVRanks extends JavaPlugin implements Listener
         boolean smelt = smeltActive.contains(player.getUniqueId());
         Block target = event.getBlock();
 
-        if(player.hasPermission("cvranks.mining.ps") || player.isOp()) { // TODO: ugh, lag
+        if(player.hasPermission("cvranks.mining.ps")) { // TODO: ugh, lag
             ItemStack tool = player.getInventory().getItemInMainHand();
             if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.LOG && target.getType() != Material.LOG_2))) return;
             
