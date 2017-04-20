@@ -42,7 +42,7 @@ import org.bukkit.TreeSpecies;
 import org.bukkit.material.Wood;
 import org.bukkit.material.Tree;
 
-public class Test extends JavaPlugin implements Listener
+public class CVRanks extends JavaPlugin implements Listener
 {
     private int uptime;
     private Map<UUID, Integer> lastHeals;
