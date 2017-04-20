@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
@@ -229,7 +231,18 @@ public class CVRanks extends JavaPlugin implements Listener
             }
             else {
                 if(args[0].equals("list")) {
-                    // TODO
+                    for (Player p : getServer().getOnlinePlayers()){
+                        UUID playerUUID = p.getUniqueId();
+                        String docName = p.getName();
+                        int docTime = lastHeals.get(playerUUID).intValue();
+                        if ((lastHeals.containsKey(playerUUID) || p.hasPermission("cv.service.dr.master")) && !p.hasPermission("cv.service.dr.hidefromlist")) {
+                            if (lastHeals.containsKey(playerUUID)) {
+                                sender.sendMessage(docName + "has" + docTime + "hours left.");
+                            } else {
+                                sender.sendMessage(docName + "is available to doc!");
+                            }
+                        }
+                    }
                 }
                 else if(args[0].equals("me")) {
                     if(senderPlayer != null) {
@@ -263,7 +276,12 @@ public class CVRanks extends JavaPlugin implements Listener
         
         return false;
     }
-
+    public Player getPlayerByUuid(UUID uuid) {
+        for(Player p : getServer().getOnlinePlayers())
+            if(p.getUniqueId().equals(uuid)) {
+                return p;
+            } 
+        }
     public void activateScuba(Player player, boolean status) {
         if(status) {
             PotionEffect scuba = new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1);
@@ -283,6 +301,12 @@ public class CVRanks extends JavaPlugin implements Listener
         else {
             player.removePotionEffect(PotionEffectType.NIGHT_VISION);
         }
+    }
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        if (scubaActive.contains(uuid)) activateScuba(player, true);
+        if (nightstalkerActive.contains(uuid))activateNightstalker(player, true);
     }
     
     public void docPlayer(CommandSender sender, Player player) {
