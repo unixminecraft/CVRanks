@@ -573,9 +573,9 @@ public class CVRanks extends JavaPlugin implements Listener
             if(drop != null) {
                 event.setCancelled(true);
                 target.setType(Material.AIR);
-                int exp = 0;
+                int exp = 1;
                 if(player.hasPermission("cvranks.mining.mp") && Math.random() < 0.15) {
-                    exp = 1;
+                    exp = 2;
                     drop.setAmount(2);
                     player.sendMessage("§aYou found an extra ingot.");
                 }
