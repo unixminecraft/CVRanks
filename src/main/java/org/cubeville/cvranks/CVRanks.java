@@ -25,12 +25,14 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceExtractEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
@@ -58,6 +60,9 @@ public class CVRanks extends JavaPlugin implements Listener
     private Set<UUID> smeltActive;
     private Map<UUID, Inventory> ratpackInventories;
     private Map<UUID, Integer> lastRepairs;
+
+    private LevelCommand levelCommand;
+    private RepairCommand repairCommand;
     
     public void onEnable() {
         stonemasonActive = new HashSet<>();
@@ -94,8 +99,20 @@ public class CVRanks extends JavaPlugin implements Listener
         ratpackInventories = new HashMap<>();
         Collection<? extends Player> players = Bukkit.getOnlinePlayers();
         for(Player p: players) loadInventory(p);
+
+        getServer().addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape(new String[] { "XXX", "XXX" }).setIngredient('X', Material.LEATHER));
+
+        repairCommand = new RepairCommand(this);
+        if(getConfig().getConfigurationSection("enchantments") != null) {
+            levelCommand = new LevelCommand(getConfig().getConfigurationSection("enchantments"), this);
+        }
+
     }
 
+    public int getUptime() {
+        return uptime;
+    }
+    
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player senderPlayer = null;
         UUID senderId = null;
@@ -107,28 +124,19 @@ public class CVRanks extends JavaPlugin implements Listener
         if(command.getName().equals("rat")) {
             if(senderPlayer == null) return true;
             senderPlayer.openInventory(ratpackInventories.get(senderPlayer.getUniqueId()));
+            return true;
         }
 
-        else if(command.getName().equals("repair")) {
-            ItemStack item = senderPlayer.getItemInHand();
-            if(item == null) {
-                sender.sendMessage("Please hold the item in your main hand.");
-                return true;
-            }
-            //if(isRepairable(item) == false) {
-            //    sender.sendMessage("This item is not repairable.");
-            //}
-            if(args.length == 0) {
-            }
-            else if(args.length == 1) {
-                if(args[0].equals("cost")) {
-                    //sender.sendMessage("That item costs " + getRepairCost(senderPlayer.getItemInHand()) + " to repair.");
-                }
-                else {
-                    sender.sendMessage("repair [cost]");
-                }
-            }
+        else if(command.getName().equals("level")) {
+            levelCommand.onLevelCommand(sender, args);
+            return true;
         }
+
+        else if(command.getName().equals("rp")) {
+            repairCommand.onRepairCommand(sender, args);
+            return true;
+        }
+        
         else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt")) {
 
             Set<UUID> typeSet;
@@ -255,7 +263,7 @@ public class CVRanks extends JavaPlugin implements Listener
                         Player player = getServer().getPlayer(playerName);
                         if(player == null || senderPlayer.canSee(player) == false) {
                             sender.sendMessage("§cPlayer not found.");
-                        } 
+                        }
                         else {
                             docPlayer(sender, player);
                         }
@@ -309,6 +317,7 @@ public class CVRanks extends JavaPlugin implements Listener
     }
 
     public int docTime(Player player) {
+        if(lastHeals.get(player.getUniqueId()) == null) return 0;
         // player's doc interval
         int rtime = 1200;
         if(player.hasPermission("cvranks.service.dr.master")) rtime = 600;
@@ -404,16 +413,20 @@ public class CVRanks extends JavaPlugin implements Listener
         }
     }
 
-    // Ya know what? I'll just wait and see if anyone complains about this useless thing not working...
-    //@EventHandler(priority = EventPriority.HIGHEST)
-    //public void onPlayerInteract(PlayerInteractEvent event) {
-    //  if(event.isCancelled()) return;
-        
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         if(player.hasPermission("cvranks.death.ks")) {
             event.setKeepInventory(true);
+            Inventory inventory = player.getInventory();
+            for(int i = 0; i < inventory.getSize(); i++) {
+                ItemStack item = inventory.getItem(i);
+                if(item != null) {
+                    if(item.getEnchantmentLevel(Enchantment.VANISHING_CURSE) > 0) {
+                        inventory.clear(i);
+                    }
+                }
+            }
         }
         if(player.hasPermission("cvranks.death.te")) {
             // Death tax?
@@ -494,13 +507,30 @@ public class CVRanks extends JavaPlugin implements Listener
         try {config.save(new File(getDataFolder(), playerId.toString())); } catch (IOException e) {}
     }
 
+    @EventHandler
+    public void onCraftItem(CraftItemEvent event)
+    {
+        if(event.isCancelled()) return;
+        if (!(event.getRecipe() instanceof ShapedRecipe)) return;
+        if (event.getRecipe().getResult().getType() != Material.SADDLE) return;
+        if (!(event.getView().getPlayer() instanceof Player)) return;
+        Player player = (Player)event.getView().getPlayer();
+        if (!player.hasPermission("cvranks.leatherworker")) event.setCancelled(true);
+    }
+    
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if(event.isCancelled()) return;
         Player player = event.getPlayer();
         boolean smelt = smeltActive.contains(player.getUniqueId());
         Block target = event.getBlock();
-        if(player.hasPermission("cvranks.mining.ps")) { // TODO: ugh, lag
+
+        boolean permPs = player.hasPermission("cvranks.mining.ps");
+        boolean permPsExtraOre = player.hasPermission("cvranks.mining.ps.ore");
+        boolean permPsExtraLogs = player.hasPermission("cvranks.mining.ps.logs");
+        boolean permPsExtraFlint = player.hasPermission("cvranks.mining.ps.flint");
+
+        if(permPs || permPsExtraOre || permPsExtraLogs || permPsExtraFlint) { // TODO: ugh, lag
             ItemStack tool = player.getInventory().getItemInMainHand();
             if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.LOG && target.getType() != Material.LOG_2))) return;
             
@@ -510,54 +540,64 @@ public class CVRanks extends JavaPlugin implements Listener
             String message = "";
             
             if(target.getType() == Material.DIAMOND_ORE) {
-                if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 8;
-                drop = new ItemStack(Material.DIAMOND);
-                message = "§aYou found an extra diamond.";
-            }
-            else if(target.getType() == Material.COAL_ORE) {
-                if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
-                else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
-                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
-                drop = new ItemStack(Material.COAL);
-                message = "§aYou found extra coal.";
-            }
-            else if(target.getType() == Material.QUARTZ_ORE) {
-                if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
-                else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
-                else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
-                drop = new ItemStack(Material.QUARTZ);
-                message = "§aYou found extra quartz";
-            } 
-            else if(target.getType() == Material.GRAVEL) {
-                if(tool.getType() == Material.STONE_SPADE) chance = 4;
-                else if(tool.getType() == Material.IRON_SPADE) chance = 8;
-                else if(tool.getType() == Material.DIAMOND_SPADE) chance = 16;
-                else if(tool.getType() == Material.GOLD_SPADE) chance = 24;
-                drop = new ItemStack(Material.FLINT);
-                message = "§aYou found extra flint";
-            }
-            else if(target.getType() == Material.LOG || target.getType() == Material.LOG_2) {
-                if (target.getType() == Material.LOG) {
-                    if(tool.getType() == Material.STONE_AXE) chance = 4;
-                    else if(tool.getType() == Material.IRON_AXE) chance = 8;
-                    else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
-                    else if(tool.getType() == Material.GOLD_AXE) chance = 24;
-                    drop = new ItemStack(Material.LOG);
-                    drop.setDurability((short) (target.getData() % 4));
-                    message = "§aYou found extra wood";
-                } else {
-                    if(tool.getType() == Material.STONE_AXE) chance = 4;
-                    else if(tool.getType() == Material.IRON_AXE) chance = 8;
-                    else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
-                    else if(tool.getType() == Material.GOLD_AXE) chance = 24;
-                    drop = new ItemStack(Material.LOG_2);
-                    drop.setDurability((short) (target.getData() % 4));
-                    message = "§aYou found extra wood";
+                if(permPs || permPsExtraOre) {
+                    if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 8;
+                    drop = new ItemStack(Material.DIAMOND);
+                    message = "§aYou found an extra diamond.";
                 }
             }
-            if(rand <= chance) {
+            else if(target.getType() == Material.COAL_ORE) {
+                if(permPs || permPsExtraOre) {
+                    if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
+                    else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
+                    else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
+                    else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
+                    drop = new ItemStack(Material.COAL);
+                    message = "§aYou found extra coal.";
+                }
+            }
+            else if(target.getType() == Material.QUARTZ_ORE) {
+                if(permPs || permPsExtraOre) {
+                    if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
+                    else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
+                    else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
+                    else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
+                    drop = new ItemStack(Material.QUARTZ);
+                    message = "§aYou found extra quartz";
+                }
+            } 
+            else if(target.getType() == Material.GRAVEL) {
+                if(permPs || permPsExtraFlint) {
+                    if(tool.getType() == Material.STONE_SPADE) chance = 4;
+                    else if(tool.getType() == Material.IRON_SPADE) chance = 8;
+                    else if(tool.getType() == Material.DIAMOND_SPADE) chance = 16;
+                    else if(tool.getType() == Material.GOLD_SPADE) chance = 24;
+                    drop = new ItemStack(Material.FLINT);
+                    message = "§aYou found extra flint";
+                }
+            }
+            else if(target.getType() == Material.LOG || target.getType() == Material.LOG_2) {
+                if(permPs || permPsExtraLogs) {
+                    if (target.getType() == Material.LOG) {
+                        if(tool.getType() == Material.STONE_AXE) chance = 4;
+                        else if(tool.getType() == Material.IRON_AXE) chance = 8;
+                        else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
+                        else if(tool.getType() == Material.GOLD_AXE) chance = 24;
+                        drop = new ItemStack(Material.LOG);
+                        drop.setDurability((short) (target.getData() % 4));
+                        message = "§aYou found extra wood";
+                    } else {
+                        if(tool.getType() == Material.STONE_AXE) chance = 4;
+                        else if(tool.getType() == Material.IRON_AXE) chance = 8;
+                        else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
+                        else if(tool.getType() == Material.GOLD_AXE) chance = 24;
+                        drop = new ItemStack(Material.LOG_2);
+                        drop.setDurability((short) (target.getData() % 4));
+                        message = "§aYou found extra wood";
+                    }
+                }
+            }
+            if(drop != null && rand <= chance) {
                 player.sendMessage("" + message);
                 player.getWorld().dropItemNaturally(target.getLocation(), drop);
             }
