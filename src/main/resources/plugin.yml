@@ -1,7 +1,7 @@
 name: CVRanks
 main: org.cubeville.cvranks.CVRanks
-author: FrediW, RandomRob13
-version: 0.1
+author: FrediW, RandomRob13, unixadmin
+version: 0.2
 
 # depend: [CVTools]
 
@@ -46,6 +46,10 @@ commands:
     description: Master Carpenter command
     permission: cvranks.build.carpenter
     
+  concrete:
+    description: Concrete Master
+    permission: cvranks.build.concrete
+
 permissions:
   cvranks.service.dr:
     description: Doctor rank

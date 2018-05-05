@@ -56,6 +56,7 @@ public class CVRanks extends JavaPlugin implements Listener
     private Set<UUID> bricklayerActive;
     private Set<UUID> carpenterActive;
     private Set<UUID> scubaActive;
+    private Set<UUID> concreteActive;
     private Set<UUID> nightstalkerActive;
     private Set<UUID> smeltActive;
     private Map<UUID, Inventory> ratpackInventories;
@@ -70,6 +71,7 @@ public class CVRanks extends JavaPlugin implements Listener
         bricklayerActive = new HashSet<>();
         carpenterActive = new HashSet<>();
         scubaActive = new HashSet<>();
+        concreteActive = new HashSet<>();
         nightstalkerActive = new HashSet<>();
         smeltActive = new HashSet<>();
         
@@ -137,7 +139,7 @@ public class CVRanks extends JavaPlugin implements Listener
             return true;
         }
         
-        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt")) {
+        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("concrete") || command.getName().equals("smelt")) {
 
             Set<UUID> typeSet;
             String typeName;
@@ -161,6 +163,10 @@ public class CVRanks extends JavaPlugin implements Listener
             else if(typeCommand.equals("scuba")) {
                 typeSet = scubaActive;
                 typeName = "scuba";
+            }
+            else if(typeCommand.equals("concrete")) {
+                typeSet = concreteActive;
+                typeName = "concrete";
             }
             else if(typeCommand.equals("ns")) {
                 typeSet = nightstalkerActive;
@@ -402,6 +408,13 @@ public class CVRanks extends JavaPlugin implements Listener
         else if(material == Material.CLAY) {
             if(bricklayerActive.contains(playerId))
                 event.getBlockPlaced().setType(Material.BRICK);
+        }
+        else if(material == Material.CONCRETE_POWDER) {
+            if(concreteActive.contains(playerId)) {
+                byte meta = event.getBlockPlaced().getData();
+                event.getBlockPlaced().setType(Material.CONCRETE);
+                event.getBlockPlaced().setData(meta);
+            }
         }
         else if(material == Material.SAND) {
             if(carpenterActive.contains(playerId))
