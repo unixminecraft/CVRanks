@@ -50,15 +50,23 @@ public class CVRanks extends JavaPlugin implements Listener
 {
     private int uptime;
     private Map<UUID, Integer> lastHeals;
+    private Map<UUID, Integer> lastRespawns;
+    private Map<UUID, Integer> lastDeathHound;
+    private Map<UUID, Integer> lastKeepsake;
+    private Map<UUID, Integer> lastKeepXP;
+    
     private Map<UUID, Location> deathLocation;
+
     private Set<UUID> stonemasonActive;
     private Set<UUID> mossgardenerActive;
     private Set<UUID> bricklayerActive;
     private Set<UUID> carpenterActive;
+    private Set<UUID> mrGlassActive;
+    private Set<UUID> mrObsidianActive;
+    private Set<UUID> mrMyceliumActive;
     private Set<UUID> scubaActive;
     private Set<UUID> nightstalkerActive;
     private Set<UUID> smeltActive;
-    private Map<UUID, Inventory> ratpackInventories;
     private Map<UUID, Integer> lastRepairs;
 
     private LevelCommand levelCommand;
@@ -72,10 +80,18 @@ public class CVRanks extends JavaPlugin implements Listener
         scubaActive = new HashSet<>();
         nightstalkerActive = new HashSet<>();
         smeltActive = new HashSet<>();
+        mrGlassActive = new HashSet<>();
+        mrObsidianActive = new HashSet<>();
+        mrMyceliumActive = new HashSet<>();
         
         deathLocation = new HashMap<>();
         
         lastHeals = new HashMap<>();
+        lastRespawns = new HashMap<>();
+        lastDeathHound = new HashMap<>();
+        lastKeepsake = new HashMap<>();
+        lastKeepXP = new HashMap<>();
+        
         uptime = 0;
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
                 public void run() {
@@ -87,6 +103,22 @@ public class CVRanks extends JavaPlugin implements Listener
                             lastHeals.remove(player);
                         }
                     }
+
+                    for(UUID player: lastRespawns.keySet()) {
+                        Player p = getServer().getPlayer(player);
+                        if(p == null || respawnTime(p) <= 0) {
+                            if(p != null) p.sendMessage("Your respawn ability is ready to use.");
+                            lastRespawns.remove(player);
+                        }
+                    }
+
+                    for(UUID player: lastDeathHound.keySet()) {
+                        Player p = getServer().getPlayer(player);
+                        if(p == null || deathHoundTime(p) <= 0) {
+                            if(p != null) p.sendMessage("Your death hound ability is ready to use.");
+                            lastDeathHound.remove(player);
+                        }                        
+                    }
                 }
             }, 200, 200);
 
@@ -95,10 +127,6 @@ public class CVRanks extends JavaPlugin implements Listener
 
         File dataFolder = getDataFolder();
         if(!dataFolder.exists()) dataFolder.mkdirs();
-
-        ratpackInventories = new HashMap<>();
-        Collection<? extends Player> players = Bukkit.getOnlinePlayers();
-        for(Player p: players) loadInventory(p);
 
         getServer().addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape(new String[] { "XXX", "XXX" }).setIngredient('X', Material.LEATHER));
 
@@ -121,13 +149,13 @@ public class CVRanks extends JavaPlugin implements Listener
             senderId = senderPlayer.getUniqueId();
         }
 
-        if(command.getName().equals("rat")) {
-            if(senderPlayer == null) return true;
-            senderPlayer.openInventory(ratpackInventories.get(senderPlayer.getUniqueId()));
-            return true;
-        }
+        // if(command.getName().equals("rat")) {
+        //     if(senderPlayer == null) return true;
+        //     senderPlayer.openInventory(ratpackInventories.get(senderPlayer.getUniqueId()));
+        //     return true;
+        // }
 
-        else if(command.getName().equals("level")) {
+        if(command.getName().equals("level")) {
             levelCommand.onLevelCommand(sender, args);
             return true;
         }
@@ -137,11 +165,13 @@ public class CVRanks extends JavaPlugin implements Listener
             return true;
         }
         
-        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt")) {
+        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt") || command.getName().equals("mr")) {
 
             Set<UUID> typeSet;
             String typeName;
             String typeCommand = command.getName();
+            String viewCommand = typeCommand;
+            int argOffset = 0;
             if(typeCommand.equals("mason")) {
                 typeSet = stonemasonActive;
                 typeName = "stonemason";
@@ -166,52 +196,122 @@ public class CVRanks extends JavaPlugin implements Listener
                 typeSet = nightstalkerActive;
                 typeName = "nightstalker";
             }
-            else { // smelt
+            else if(typeCommand.equals("smelt")) {
                 typeSet = smeltActive;
                 typeName = "instasmelt";
             }
-            if(args.length > 1) {
-                sender.sendMessage("Too many arguments.");
-                sender.sendMessage("/" + typeCommand + " [on|off]");
-            }
-            else if(args.length == 0) {
-                if(typeSet.contains(senderId)) {
-                    sender.sendMessage("§aYour " + typeName + " ability is currently enabled.");
-                    sender.sendMessage("§aYou can toggle it with /" + typeCommand + " off");
+            else if(typeCommand.equals("mr")) {
+                argOffset = 1;
+                if(args.length < 1) {
+                    sender.sendMessage("§c/mr <type> [on|off]");
+                    return true;
+                }
+                String permissionCheck = null;
+                if(args[0].equals("glass")) {
+                    typeSet = mrGlassActive;
+                    typeName = "glass minirank";
+                    permissionCheck = "cvranks.mr.glass";
+                }
+                else if(args[0].equals("obsidian")) {
+                    typeSet = mrObsidianActive;
+                    typeName = "obsidian minirank";
+                    permissionCheck = "cvranks.mr.obsidian";
+                }
+                else if(args[0].equals("mycelium")) {
+                    typeSet = mrMyceliumActive;
+                    typeName = "mycelium minirank";
+                    permissionCheck = "cvranks.mr.mycelium";
                 }
                 else {
-                    sender.sendMessage("§cYour " + typeName + " ability is currently disabled.");
-                    sender.sendMessage("§cYou may toggle it with /" + typeCommand + " on");
+                    sender.sendMessage("§cUnknown minirank, can be one of mycelium, glass, obsidian.");
+                    return true;
+                }
+                viewCommand = "mr " + args[0];
+                if(!sender.hasPermission(permissionCheck)) {
+                    sender.sendMessage("§cNo permission.");
+                    return true;
                 }
             }
             else {
-                if(args[0].equals("on")) {
-                    if(typeSet.contains(senderId)) {
-                        sender.sendMessage("§cYour " + typeName + " ability is already enabled.");
-                    }
-                    else {
-                        typeSet.add(senderId);
-                        sender.sendMessage("§aYour " + typeName + " ability has been enabled.");
-                    }
-                    if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, true);
-                    if(typeName.equals("scuba")) activateScuba(senderPlayer, true);
-                }
-                else if(args[0].equals("off")) {
-                    if(typeSet.contains(senderId)) {
-                        typeSet.remove(senderId);
-                        sender.sendMessage("§aYour " + typeName + " ability has been disabled.");
-                    }
-                    else {
-                        sender.sendMessage("§cYour " + typeName + " ability is already disabled.");
-                    }
-                    if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, false);
-                    if(typeName.equals("scuba")) activateScuba(senderPlayer, false);
+                sender.sendMessage("§cUnknown command.");
+                return true;
+            }
+
+            if(args.length - argOffset > 1) {
+                sender.sendMessage("§cToo many arguments.");
+                sender.sendMessage("§c/" + viewCommand + " [on|off]");
+                return true;
+            }
+            
+            if(args.length == argOffset) {
+                if(typeSet.contains(senderId)) {
+                    sender.sendMessage("§aYour " + typeName + " ability is currently enabled.");
+                    sender.sendMessage("§aYou can toggle it with /" + viewCommand + " off");
                 }
                 else {
-                    sender.sendMessage("§c/" + typeCommand + " [on|off]");
+                    sender.sendMessage("§cYour " + typeName + " ability is currently disabled.");
+                    sender.sendMessage("§cYou may toggle it with /" + viewCommand + " on");
                 }
+                return true;
+            }
+
+            if(args[argOffset].equals("on")) {
+                if(typeSet.contains(senderId)) {
+                    sender.sendMessage("§cYour " + typeName + " ability is already enabled.");
+                }
+                else {
+                    typeSet.add(senderId);
+                    sender.sendMessage("§aYour " + typeName + " ability has been enabled.");
+                }
+                if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, true);
+                if(typeName.equals("scuba")) activateScuba(senderPlayer, true);
+            }
+            else if(args[argOffset].equals("off")) {
+                if(typeSet.contains(senderId)) {
+                    typeSet.remove(senderId);
+                    sender.sendMessage("§aYour " + typeName + " ability has been disabled.");
+                }
+                else {
+                    sender.sendMessage("§cYour " + typeName + " ability is already disabled.");
+                }
+                if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, false);
+                if(typeName.equals("scuba")) activateScuba(senderPlayer, false);
+            }
+            else {
+                sender.sendMessage("§c/" + viewCommand + " [on|off]");
             }
             return true;
+        }
+
+        else if (command.getName().equals("dh")) {
+            if(args.length != 1) {
+                sender.sendMessage("§2/dh <player>");
+            }
+            else {
+                if(!senderPlayer.hasPermission("cvranks.death.ks")) {
+                    sender.sendMessage("§cNo permission.");
+                }
+                else {
+                    Player player = getServer().getPlayerExact(args[0]);
+                    if(player == null) {
+                        sender.sendMessage("§cPlayer not found or is not on survival.");
+                    }
+                    else {
+                        if(deathLocation.containsKey(player.getUniqueId())) {
+                            Location dl = deathLocation.get(player.getUniqueId());
+                            if(player.getName().equals(sender.getName())) {
+                                player.sendMessage("§aYour last death coordinates: §e" + dl.getBlockX() + "§r/§e" + dl.getBlockY() + "§r/§e" + dl.getBlockZ());
+                            }
+                            else {
+                                player.sendMessage("§a" + sender.getName() + " is informing you about your last death coordinates: §e" + dl.getBlockX() + "§r/§e" + dl.getBlockY() + "§r/§e" + dl.getBlockZ());
+                            }
+                        }
+                        else {
+                            sender.sendMessage("§cPlayer has not died recently.");
+                        }
+                    }
+                }
+            }
         }
         
         else if (command.getName().equals("doc")) {
@@ -275,9 +375,15 @@ public class CVRanks extends JavaPlugin implements Listener
 
         else if (command.getName().equals("respawn")) {
             if(senderPlayer != null && deathLocation.containsKey(senderId)) {
-                senderPlayer.teleport(deathLocation.get(senderId));
-                deathLocation.remove(senderId);
-                sender.sendMessage("§aYou have been returned to the point of your last death!");
+                if(respawnTime(senderPlayer) > 0) {
+                    sender.sendMessage("§cYour respawn cooldown is still at " + respawnTime(senderPlayer) + " seconds.");
+                }
+                else {
+                    senderPlayer.teleport(deathLocation.get(senderId));
+                    deathLocation.remove(senderId);
+                    sender.sendMessage("§aYou have been returned to the point of your last death!");
+                    resetRespawnTime(senderPlayer);
+                }
             }
             else {
                 sender.sendMessage("§cYou don't have a death point to return to.");
@@ -326,7 +432,51 @@ public class CVRanks extends JavaPlugin implements Listener
         // time until next available heal
         return rtime - htime;
     }
-    
+
+    public int respawnTime(Player player) {
+        if(lastRespawns.get(player.getUniqueId()) == null) return 0;
+        int rtime = 3600;
+        int htime = uptime - lastRespawns.get(player.getUniqueId());
+        return rtime - htime;
+    }
+
+    public void resetRespawnTime(Player player) {
+        lastRespawns.put(player.getUniqueId(), uptime);
+    }
+
+    public int deathHoundTime(Player player) {
+        if(lastDeathHound.get(player.getUniqueId()) == null) return 0;
+        int rtime = 1200;
+        int htime = uptime - lastDeathHound.get(player.getUniqueId());
+        return rtime - htime;
+    }
+
+    public void resetDeathHoundTime(Player player) {
+        lastDeathHound.put(player.getUniqueId(), uptime);
+    }
+
+    public int keepsakeTime(Player player) {
+        if(lastKeepsake.get(player.getUniqueId()) == null) return 0;
+        int rtime = 1200;
+        int htime = uptime - lastKeepsake.get(player.getUniqueId());
+        return rtime - htime;
+    }
+
+    public void resetKeepsakeTime(Player player) {
+        lastKeepsake.put(player.getUniqueId(), uptime);
+    }
+
+    public int keepXPTime(Player player) {
+        if(lastKeepXP.get(player.getUniqueId()) == null) return 0;
+        int rtime = 1200;
+        int htime = uptime - lastKeepXP.get(player.getUniqueId());
+        return rtime - htime;
+    }
+
+    public void resetKeepXPTime(Player player) {
+        lastKeepXP.put(player.getUniqueId(), uptime);
+    }
+
     public void docPlayer(CommandSender sender, Player player) {
         boolean used = false;
 
@@ -347,6 +497,12 @@ public class CVRanks extends JavaPlugin implements Listener
         }
         else {
             senderName = "Console";
+        }
+
+        if (player.isDead()) {
+            player.sendMessage("§a" + senderName + " tried to doc you, but it was too late.");
+            sender.sendMessage("§cToo late...");
+            return;
         }
         
         if (player.getHealth() < player.getMaxHealth()) {
@@ -404,12 +560,17 @@ public class CVRanks extends JavaPlugin implements Listener
                 event.getBlockPlaced().setType(Material.BRICK);
         }
         else if(material == Material.SAND) {
-            if(carpenterActive.contains(playerId))
+            if(carpenterActive.contains(playerId) || mrGlassActive.contains(playerId))
                 event.getBlockPlaced().setType(Material.GLASS);
         }
         else if(material == Material.SOUL_SAND) {
-            if(carpenterActive.contains(playerId))
+            if(carpenterActive.contains(playerId) || mrObsidianActive.contains(playerId))
                 event.getBlockPlaced().setType(Material.OBSIDIAN);
+        }
+        else if(material == Material.DIRT) {
+            if(mrMyceliumActive.contains(playerId)) {
+                event.getBlockPlaced().setType(Material.MYCELIUM);
+            }
         }
     }
 
@@ -417,95 +578,100 @@ public class CVRanks extends JavaPlugin implements Listener
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         if(player.hasPermission("cvranks.death.ks")) {
-            event.setKeepInventory(true);
-            Inventory inventory = player.getInventory();
-            for(int i = 0; i < inventory.getSize(); i++) {
-                ItemStack item = inventory.getItem(i);
-                if(item != null) {
-                    if(item.getEnchantmentLevel(Enchantment.VANISHING_CURSE) > 0) {
-                        inventory.clear(i);
+            if(keepsakeTime(player) <= 0) {
+                resetKeepsakeTime(player);
+                event.setKeepInventory(true);
+                event.getDrops().clear();
+                Inventory inventory = player.getInventory();
+                for(int i = 0; i < inventory.getSize(); i++) {
+                    ItemStack item = inventory.getItem(i);
+                    if(item != null) {
+                        if(item.getEnchantmentLevel(Enchantment.VANISHING_CURSE) > 0) {
+                            inventory.clear(i);
+                        }
                     }
                 }
             }
         }
         if(player.hasPermission("cvranks.death.te")) {
-            // Death tax?
-            event.setKeepLevel(true);
-            event.setDroppedExp(0);
+            if(keepXPTime(player) <= 0) {
+                // Death tax?
+                event.setKeepLevel(true);
+                event.setDroppedExp(0);
+                resetKeepXPTime(player);
+            }
         }
-        if(player.hasPermission("cvranks.death.dm")) {
-            deathLocation.put(player.getUniqueId(), player.getLocation());
-        }
+        deathLocation.put(player.getUniqueId(), player.getLocation());
     }
         
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        loadInventory(player);
-    }
+    // @EventHandler
+    // public void onPlayerJoin(PlayerJoinEvent event) {
+    //     Player player = event.getPlayer();
+    //     loadInventory(player);
+    // }
 
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if(!event.getInventory().getName().startsWith("Packrat ")) return;
-        Player player = Bukkit.getPlayerExact(event.getInventory().getName().substring(8));
-        if(player == null) {
-            event.getPlayer().sendMessage("§cCould not save packrat inventory, unknown player " + event.getInventory().getName().substring(8));
-            return;
-        }
-        saveInventory(player);
-    }
+    // @EventHandler
+    // public void onInventoryClose(InventoryCloseEvent event) {
+    //     if(!event.getInventory().getName().startsWith("Packrat ")) return;
+    //     Player player = Bukkit.getPlayerExact(event.getInventory().getName().substring(8));
+    //     if(player == null) {
+    //         event.getPlayer().sendMessage("§cCould not save packrat inventory, unknown player " + event.getInventory().getName().substring(8));
+    //         return;
+    //     }
+    //     saveInventory(player);
+    // }
     
-    public void loadInventory(Player player) {
-        if(!player.hasPermission("cvranks.death.ratpack")) return;
+    // public void loadInventory(Player player) {
+    //     if(!player.hasPermission("cvranks.death.ratpack")) return;
         
-        UUID playerId = player.getUniqueId();
-        int inventorySize = 18;
-        if(player.hasPermission("cvranks.death.ratpack.master")) inventorySize = 27;
+    //     UUID playerId = player.getUniqueId();
+    //     int inventorySize = 18;
+    //     if(player.hasPermission("cvranks.death.ratpack.master")) inventorySize = 27;
 
-        if(ratpackInventories.containsKey(playerId)) {
-            if(inventorySize == ratpackInventories.get(playerId).getSize()) {
-                return;
-            }
-            ratpackInventories.remove(playerId);
-        }
+    //     if(ratpackInventories.containsKey(playerId)) {
+    //         if(inventorySize == ratpackInventories.get(playerId).getSize()) {
+    //             return;
+    //         }
+    //         ratpackInventories.remove(playerId);
+    //     }
 
-        Inventory inventory = Bukkit.createInventory(null, inventorySize, "Packrat " + player.getName());
-        ratpackInventories.put(playerId, inventory);
+    //     Inventory inventory = Bukkit.createInventory(null, inventorySize, "Packrat " + player.getName());
+    //     ratpackInventories.put(playerId, inventory);
 
-        File configFile = new File(getDataFolder(), playerId.toString());
-        if(configFile.exists()) {
-            YamlConfiguration config = new YamlConfiguration();
-            try { config.load(configFile); } catch (Exception e) {}
-            List<Map<String, Object>> itemList = (List<Map<String, Object>>) config.getList("ratpack");
-            int c = 0;
-            for(Map<String, Object> ic: itemList) {
-                if(ic != null) {
-                    ItemStack item = ItemStack.deserialize(ic);
-                    inventory.setItem(c, item);
-                }
-                c++;
-                if(c == inventorySize) break;
-            }
-        }
-    }
+    //     File configFile = new File(getDataFolder(), playerId.toString());
+    //     if(configFile.exists()) {
+    //         YamlConfiguration config = new YamlConfiguration();
+    //         try { config.load(configFile); } catch (Exception e) {}
+    //         List<Map<String, Object>> itemList = (List<Map<String, Object>>) config.getList("ratpack");
+    //         int c = 0;
+    //         for(Map<String, Object> ic: itemList) {
+    //             if(ic != null) {
+    //                 ItemStack item = ItemStack.deserialize(ic);
+    //                 inventory.setItem(c, item);
+    //             }
+    //             c++;
+    //             if(c == inventorySize) break;
+    //         }
+    //     }
+    // }
 
-    public void saveInventory(Player player) {
-        UUID playerId = player.getUniqueId();
-        if(!ratpackInventories.containsKey(playerId)) return;
-        List<Map<String, Object>> itemList = new ArrayList<>();
-        Inventory inventory = ratpackInventories.get(playerId);
-        for(int c = 0; c < inventory.getSize(); c++) {
-            if(inventory.getItem(c) == null) {
-                itemList.add(null);
-            }
-            else {
-                itemList.add(inventory.getItem(c).serialize());
-            }
-        }
-        YamlConfiguration config = new YamlConfiguration();
-        config.set("ratpack", itemList);
-        try {config.save(new File(getDataFolder(), playerId.toString())); } catch (IOException e) {}
-    }
+    // public void saveInventory(Player player) {
+    //     UUID playerId = player.getUniqueId();
+    //     if(!ratpackInventories.containsKey(playerId)) return;
+    //     List<Map<String, Object>> itemList = new ArrayList<>();
+    //     Inventory inventory = ratpackInventories.get(playerId);
+    //     for(int c = 0; c < inventory.getSize(); c++) {
+    //         if(inventory.getItem(c) == null) {
+    //             itemList.add(null);
+    //         }
+    //         else {
+    //             itemList.add(inventory.getItem(c).serialize());
+    //         }
+    //     }
+    //     YamlConfiguration config = new YamlConfiguration();
+    //     config.set("ratpack", itemList);
+    //     try {config.save(new File(getDataFolder(), playerId.toString())); } catch (IOException e) {}
+    // }
 
     @EventHandler
     public void onCraftItem(CraftItemEvent event)
@@ -532,7 +698,7 @@ public class CVRanks extends JavaPlugin implements Listener
 
         if(permPs || permPsExtraOre || permPsExtraLogs || permPsExtraFlint) { // TODO: ugh, lag
             ItemStack tool = player.getInventory().getItemInMainHand();
-            if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.LOG && target.getType() != Material.LOG_2))) return;
+            if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.ACACIA_LOG && target.getType() != Material.BIRCH_LOG && target.getType() != Material.DARK_OAK_LOG && target.getType() != Material.JUNGLE_LOG && target.getType() != Material.OAK_LOG && target.getType() != Material.SPRUCE_LOG))) return;
             
             int rand = (int)Math.floor(100.0D * Math.random()) + 1;
             ItemStack drop = null;
@@ -551,50 +717,41 @@ public class CVRanks extends JavaPlugin implements Listener
                     if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
                     else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
                     else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                    else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
+                    else if(tool.getType() == Material.GOLDEN_PICKAXE) chance = 24;
                     drop = new ItemStack(Material.COAL);
                     message = "§aYou found extra coal.";
                 }
             }
-            else if(target.getType() == Material.QUARTZ_ORE) {
+            else if(target.getType() == Material.QUARTZ) {
                 if(permPs || permPsExtraOre) {
                     if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
                     else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
                     else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                    else if(tool.getType() == Material.GOLD_PICKAXE) chance = 24;
+                    else if(tool.getType() == Material.GOLDEN_PICKAXE) chance = 24;
                     drop = new ItemStack(Material.QUARTZ);
                     message = "§aYou found extra quartz";
                 }
             } 
             else if(target.getType() == Material.GRAVEL) {
                 if(permPs || permPsExtraFlint) {
-                    if(tool.getType() == Material.STONE_SPADE) chance = 4;
-                    else if(tool.getType() == Material.IRON_SPADE) chance = 8;
-                    else if(tool.getType() == Material.DIAMOND_SPADE) chance = 16;
-                    else if(tool.getType() == Material.GOLD_SPADE) chance = 24;
+                    if(tool.getType() == Material.STONE_SHOVEL) chance = 4;
+                    else if(tool.getType() == Material.IRON_SHOVEL) chance = 8;
+                    else if(tool.getType() == Material.DIAMOND_SHOVEL) chance = 16;
+                    else if(tool.getType() == Material.GOLDEN_SHOVEL) chance = 24;
                     drop = new ItemStack(Material.FLINT);
                     message = "§aYou found extra flint";
                 }
             }
-            else if(target.getType() == Material.LOG || target.getType() == Material.LOG_2) {
+            else if(target.getType() == Material.ACACIA_LOG || target.getType() == Material.BIRCH_LOG ||
+                    target.getType() == Material.DARK_OAK_LOG || target.getType() == Material.JUNGLE_LOG ||
+                    target.getType() == Material.OAK_LOG || target.getType() == Material.SPRUCE_LOG) {
                 if(permPs || permPsExtraLogs) {
-                    if (target.getType() == Material.LOG) {
-                        if(tool.getType() == Material.STONE_AXE) chance = 4;
-                        else if(tool.getType() == Material.IRON_AXE) chance = 8;
-                        else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
-                        else if(tool.getType() == Material.GOLD_AXE) chance = 24;
-                        drop = new ItemStack(Material.LOG);
-                        drop.setDurability((short) (target.getData() % 4));
-                        message = "§aYou found extra wood";
-                    } else {
-                        if(tool.getType() == Material.STONE_AXE) chance = 4;
-                        else if(tool.getType() == Material.IRON_AXE) chance = 8;
-                        else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
-                        else if(tool.getType() == Material.GOLD_AXE) chance = 24;
-                        drop = new ItemStack(Material.LOG_2);
-                        drop.setDurability((short) (target.getData() % 4));
-                        message = "§aYou found extra wood";
-                    }
+                    if(tool.getType() == Material.STONE_AXE) chance = 4;
+                    else if(tool.getType() == Material.IRON_AXE) chance = 8;
+                    else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
+                    else if(tool.getType() == Material.GOLDEN_AXE) chance = 24;
+                    drop = new ItemStack(target.getType());
+                    message = "§aYou found extra wood";
                 }
             }
             if(drop != null && rand <= chance) {

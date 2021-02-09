@@ -94,36 +94,36 @@ public class RepairCommand
         case DIAMOND_AXE: 
         case DIAMOND_HOE: 
         case DIAMOND_PICKAXE: 
-        case DIAMOND_SPADE: 
+        case DIAMOND_SHOVEL: 
         case DIAMOND_SWORD: 
             return "1 diamond";
      
         case IRON_AXE: 
         case IRON_HOE: 
         case IRON_PICKAXE: 
-        case IRON_SPADE: 
+        case IRON_SHOVEL: 
         case IRON_SWORD: 
             return "1 iron ingot";
     
-        case GOLD_AXE: 
-        case GOLD_HOE: 
-        case GOLD_PICKAXE: 
-        case GOLD_SPADE: 
-        case GOLD_SWORD: 
+        case GOLDEN_AXE: 
+        case GOLDEN_HOE: 
+        case GOLDEN_PICKAXE: 
+        case GOLDEN_SHOVEL: 
+        case GOLDEN_SWORD: 
             return "1 gold ingot";
      
         case STONE_AXE: 
         case STONE_HOE: 
         case STONE_PICKAXE: 
-        case STONE_SPADE: 
+        case STONE_SHOVEL: 
         case STONE_SWORD: 
             return "1 cobblestone";
      
-        case WOOD_AXE: 
-        case WOOD_HOE: 
-        case WOOD_PICKAXE: 
-        case WOOD_SPADE: 
-        case WOOD_SWORD: 
+        case WOODEN_AXE: 
+        case WOODEN_HOE: 
+        case WOODEN_PICKAXE: 
+        case WOODEN_SHOVEL: 
+        case WOODEN_SWORD: 
             return "1 wood plank";
     
         case DIAMOND_CHESTPLATE: 
@@ -150,14 +150,14 @@ public class RepairCommand
         case CHAINMAIL_HELMET: 
             return "2 iron ingots";
     
-        case GOLD_CHESTPLATE: 
+        case GOLDEN_CHESTPLATE: 
             return "4 gold ingots";
      
-        case GOLD_LEGGINGS: 
+        case GOLDEN_LEGGINGS: 
             return "3 gold ingots";
     
-        case GOLD_BOOTS: 
-        case GOLD_HELMET: 
+        case GOLDEN_BOOTS: 
+        case GOLDEN_HELMET: 
             return "2 gold ingots";
      
         case LEATHER_CHESTPLATE: 
@@ -198,11 +198,11 @@ public class RepairCommand
         else if (cost.contains("cobblestone"))
             material = Material.COBBLESTONE;
         else if (cost.contains("wood plank"))
-            material = Material.WOOD;
+            material = Material.OAK_WOOD;
         else if (cost.contains("leather"))
             material = Material.LEATHER;
         else if (cost.contains("log"))
-            material = Material.LOG;
+            material = Material.OAK_LOG;
         else return false;
 
         int amount;

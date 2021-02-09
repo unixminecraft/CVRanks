@@ -2,6 +2,7 @@ name: CVRanks
 main: org.cubeville.cvranks.CVRanks
 author: FrediW, RandomRob13
 version: 0.1
+api-version: 1.16
 
 # depend: [CVTools]
 
@@ -45,7 +46,24 @@ commands:
   carp:
     description: Master Carpenter command
     permission: cvranks.build.carpenter
+
+  level:
+    description: Repairman Level command
+    permission: cvranks.service.repairman
+    aliases: lvl
     
+  rp:
+    description: Repairman Repair command
+    permission: cvranks.service.repairman
+    aliases: repair
+
+  mr:
+    description: Minirank command
+
+  dh:
+    description: Death Hound command
+    aliases: deathhound
+
 permissions:
   cvranks.service.dr:
     description: Doctor rank
@@ -62,4 +80,7 @@ permissions:
   cvranks.death.ratpack.master:
     description: Additional ratpack inventory row
     default: op
-    
+
+  cvranks.death.hound:
+    description: Use of the deathhound command
+    default: op
