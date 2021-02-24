@@ -1,34 +1,20 @@
 package org.cubeville.cvranks;
 
-import java.io.File;
-import java.io.IOException;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.inventory.CraftItemEvent;
-import org.bukkit.event.inventory.FurnaceExtractEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -38,13 +24,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.block.Block;
-import org.bukkit.material.MaterialData;
-import org.bukkit.TreeSpecies;
-import org.bukkit.material.Wood;
-import org.bukkit.material.Tree;
+import java.io.File;
+import java.util.*;
 
 public class CVRanks extends JavaPlugin implements Listener
 {
@@ -673,16 +654,16 @@ public class CVRanks extends JavaPlugin implements Listener
     //     try {config.save(new File(getDataFolder(), playerId.toString())); } catch (IOException e) {}
     // }
 
-    @EventHandler
-    public void onCraftItem(CraftItemEvent event)
-    {
-        if(event.isCancelled()) return;
-        if (!(event.getRecipe() instanceof ShapedRecipe)) return;
-        if (event.getRecipe().getResult().getType() != Material.SADDLE) return;
-        if (!(event.getView().getPlayer() instanceof Player)) return;
-        Player player = (Player)event.getView().getPlayer();
-        if (!player.hasPermission("cvranks.leatherworker")) event.setCancelled(true);
-    }
+//    @EventHandler
+//    public void onCraftItem(CraftItemEvent event)
+//    {
+//        if(event.isCancelled()) return;
+//        if (!(event.getRecipe() instanceof ShapedRecipe)) return;
+//        if (event.getRecipe().getResult().getType() != Material.SADDLE) return;
+//        if (!(event.getView().getPlayer() instanceof Player)) return;
+//        Player player = (Player)event.getView().getPlayer();
+//        if (!player.hasPermission("cvranks.leatherworker")) event.setCancelled(true);
+//    }
     
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
@@ -784,6 +765,25 @@ public class CVRanks extends JavaPlugin implements Listener
             ItemStack drop = new ItemStack(Material.DIAMOND);
             player.getWorld().dropItemNaturally(target.getLocation(), drop);
             player.sendMessage("§aYou found a diamond.");
+        }
+    }
+
+    @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        if (event.getEntity().getKiller().hasPermission("cvranks.leatherworker")) {
+
+            List<EntityType> leatherAnimals = new ArrayList<>();
+            leatherAnimals.add(EntityType.COW);
+            leatherAnimals.add(EntityType.MUSHROOM_COW);
+            leatherAnimals.add(EntityType.HORSE);
+            leatherAnimals.add(EntityType.DONKEY);
+            leatherAnimals.add(EntityType.MULE);
+            leatherAnimals.add(EntityType.LLAMA);
+
+            if (leatherAnimals.contains(event.getEntity().getType())) {
+                ItemStack drop = new ItemStack(Material.LEATHER);
+                event.getEntity().getKiller().getWorld().dropItemNaturally(event.getEntity().getLocation(), drop);
+            }
         }
     }
 }
