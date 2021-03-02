@@ -4,20 +4,14 @@ author: FrediW, RandomRob13
 version: 0.1
 api-version: 1.16
 
-# depend: [CVTools]
-
 commands:
   
   doc:
     description: DR rank command
-    
+
   respawn:
     description: DM respawn command
     permission: cvranks.death.respawn
-
-  rat:
-    description: Open ratpack inventory
-    permission: cvranks.death.ratpack
 
   ns:
     description: Nightstalker
@@ -71,14 +65,6 @@ permissions:
 
   cvranks.death.respawn:
     description: Respawn command
-    default: op
-
-  cvranks.death.ratpack:
-    description: Stores a ratpack for the player, access to /rat
-    default: op
-
-  cvranks.death.ratpack.master:
-    description: Additional ratpack inventory row
     default: op
 
   cvranks.death.hound:

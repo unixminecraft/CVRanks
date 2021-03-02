@@ -8,10 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class LevelCommand
 {
     CVRanks plugin;
@@ -49,7 +45,7 @@ public class LevelCommand
             return;
         }
 
-        ItemStack item = player.getItemInHand();
+        ItemStack item = player.getInventory().getItemInMainHand();
         if(item == null || item.getType() == Material.AIR) {
             sender.sendMessage("§cPlease hold the item you want to level up.");
             return;
