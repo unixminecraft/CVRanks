@@ -1,10 +1,20 @@
 package org.cubeville.cvranks;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -764,8 +774,12 @@ public class CVRanks extends JavaPlugin implements Listener
             leatherAnimals.add(EntityType.LLAMA);
 
             if (leatherAnimals.contains(event.getEntity().getType())) {
-                ItemStack drop = new ItemStack(Material.LEATHER);
-                event.getEntity().getKiller().getWorld().dropItemNaturally(event.getEntity().getLocation(), drop);
+                Player killer = event.getEntity().getKiller();
+                if(killer != null) {
+                    ItemStack drop = new ItemStack(Material.LEATHER);
+                    killer.getWorld().dropItemNaturally(event.getEntity().getLocation(), drop);
+                    killer.sendMessage("§aYou got extra leather.");
+                }
             }
         }
     }
