@@ -284,7 +284,7 @@ public class CVRanks extends JavaPlugin implements Listener
                 if(args[0].equals("list")) {
                     boolean found = false;
                     for (Player p : getServer().getOnlinePlayers()) {
-                        if(p.hasPermission("cvranks.death.ks") && !p.hasPermission("cvranks.death.ks.hidefromlist") && senderPlayer.canSee(p)) {
+                        if(p.hasPermission("cvranks.death.hound") && !p.hasPermission("cvranks.death.hound.hidefromlist") && senderPlayer.canSee(p)) {
                             found = true;
                             UUID playerId = p.getUniqueId();
                             String dhName = p.getDisplayName();
@@ -299,7 +299,7 @@ public class CVRanks extends JavaPlugin implements Listener
                     if(!found) { sender.sendMessage("§cNo Death Hounds online."); }
                 }
                 else {
-                    if(!senderPlayer.hasPermission("cvranks.death.ks")) {
+                    if(!senderPlayer.hasPermission("cvranks.death.hound")) {
                         sender.sendMessage("§cNo permission.");
                     }
                     else if(deathHoundTime(senderPlayer) > 0) {
