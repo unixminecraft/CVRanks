@@ -1,6 +1,8 @@
 package org.cubeville.cvranks;
 
+import java.util.Iterator;
 import org.bukkit.Material;
+import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -12,8 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class RepairCommand
-{
+public class RepairCommand {
+    
     CVRanks plugin;
 
     Map<UUID, Integer> lastUsage;
@@ -21,6 +23,22 @@ public class RepairCommand
     public RepairCommand(CVRanks plugin) {
         this.plugin = plugin;
         lastUsage = new HashMap<>();
+        
+        final Server server = this.plugin.getServer();
+        // This task timer will run to notify repair
+        // persons that their ability is ready to use again.
+        server.getScheduler().runTaskTimer(this.plugin, () -> {
+    
+            Iterator<Map.Entry<UUID, Integer>> iter = lastUsage.entrySet().iterator();
+            while (iter.hasNext()) {
+                Player p = server.getPlayer(iter.next().getKey());
+                if (p != null && getTime(p) <= 0) {
+                    p.sendMessage("§aYour repair ability is ready to use.");
+                    iter.remove();
+                }
+            }
+            
+        }, 200, 200);
     }
 
     public int getTime(Player player) {
@@ -35,7 +53,7 @@ public class RepairCommand
         if(!(sender instanceof Player)) return;
         Player player = (Player) sender;
 
-        if(args.length > 1 || (args.length == 1 && args[0].equals("cost") == false && args[0].equals("time") == false)) {
+        if(args.length > 1 || (args.length == 1 && !args[0].equals("cost") && !args[0].equals("time"))) {
             player.sendMessage("§cWrong number of arguments.");
             player.sendMessage("§c/rp [cost|time]");
             return;
@@ -54,8 +72,8 @@ public class RepairCommand
             return;
         }
         
-        ItemStack item = player.getItemInHand();
-        if(item == null || item.getType() == Material.AIR) {
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if(item.getType() == Material.AIR) {
             player.sendMessage("§cPlease hold the item that you want to repair.");
             return;
         }
@@ -83,113 +101,110 @@ public class RepairCommand
         }
     }
     
-    public static boolean isRepairable(ItemStack item)
-    {
+    public static boolean isRepairable(ItemStack item) {
         return (item != null) && (getRepairCost(item) != null) && (item.getDurability() > 0);
     }
 
-    public static String getRepairCost(ItemStack item)
-    {
+    public static String getRepairCost(ItemStack item) {
+        
         switch (item.getType()) {
-        case DIAMOND_AXE: 
-        case DIAMOND_HOE: 
-        case DIAMOND_PICKAXE: 
-        case DIAMOND_SHOVEL: 
-        case DIAMOND_SWORD: 
-            return "1 diamond";
-     
-        case IRON_AXE: 
-        case IRON_HOE: 
-        case IRON_PICKAXE: 
-        case IRON_SHOVEL: 
-        case IRON_SWORD: 
-            return "1 iron ingot";
+            case DIAMOND_AXE: 
+            case DIAMOND_HOE: 
+            case DIAMOND_PICKAXE: 
+            case DIAMOND_SHOVEL: 
+            case DIAMOND_SWORD: 
+                return "1 diamond";
+         
+            case IRON_AXE: 
+            case IRON_HOE: 
+            case IRON_PICKAXE: 
+            case IRON_SHOVEL: 
+            case IRON_SWORD:
+            case SHEARS:
+                return "1 iron ingot";
+        
+            case GOLDEN_AXE: 
+            case GOLDEN_HOE: 
+            case GOLDEN_PICKAXE: 
+            case GOLDEN_SHOVEL: 
+            case GOLDEN_SWORD: 
+                return "1 gold ingot";
+         
+            case STONE_AXE: 
+            case STONE_HOE: 
+            case STONE_PICKAXE: 
+            case STONE_SHOVEL: 
+            case STONE_SWORD: 
+                return "1 cobblestone";
+         
+            case WOODEN_AXE: 
+            case WOODEN_HOE: 
+            case WOODEN_PICKAXE: 
+            case WOODEN_SHOVEL: 
+            case WOODEN_SWORD: 
+                return "1 wood plank";
+        
+            case DIAMOND_CHESTPLATE: 
+                return "4 diamonds";
+        
+            case DIAMOND_LEGGINGS: 
+                return "3 diamonds";
+         
+            case DIAMOND_BOOTS: 
+            case DIAMOND_HELMET: 
+                return "2 diamonds";
+         
+            case IRON_CHESTPLATE: 
+            case CHAINMAIL_CHESTPLATE: 
+                return "4 iron ingots";
+         
+            case IRON_LEGGINGS: 
+            case CHAINMAIL_LEGGINGS: 
+                return "3 iron ingots";
+         
+            case IRON_BOOTS: 
+            case IRON_HELMET: 
+            case CHAINMAIL_BOOTS: 
+            case CHAINMAIL_HELMET: 
+                return "2 iron ingots";
+        
+            case GOLDEN_CHESTPLATE: 
+                return "4 gold ingots";
+         
+            case GOLDEN_LEGGINGS: 
+                return "3 gold ingots";
+        
+            case GOLDEN_BOOTS: 
+            case GOLDEN_HELMET: 
+                return "2 gold ingots";
+         
+            case LEATHER_CHESTPLATE: 
+                return "4 leather";
+         
+            case LEATHER_LEGGINGS: 
+                return "3 leather";
+         
+            case LEATHER_BOOTS: 
+            case LEATHER_HELMET: 
+                return "2 leather";
     
-        case GOLDEN_AXE: 
-        case GOLDEN_HOE: 
-        case GOLDEN_PICKAXE: 
-        case GOLDEN_SHOVEL: 
-        case GOLDEN_SWORD: 
-            return "1 gold ingot";
-     
-        case STONE_AXE: 
-        case STONE_HOE: 
-        case STONE_PICKAXE: 
-        case STONE_SHOVEL: 
-        case STONE_SWORD: 
-            return "1 cobblestone";
-     
-        case WOODEN_AXE: 
-        case WOODEN_HOE: 
-        case WOODEN_PICKAXE: 
-        case WOODEN_SHOVEL: 
-        case WOODEN_SWORD: 
-            return "1 wood plank";
-    
-        case DIAMOND_CHESTPLATE: 
-            return "4 diamonds";
-    
-        case DIAMOND_LEGGINGS: 
-            return "3 diamonds";
-     
-        case DIAMOND_BOOTS: 
-        case DIAMOND_HELMET: 
-            return "2 diamonds";
-     
-        case IRON_CHESTPLATE: 
-        case CHAINMAIL_CHESTPLATE: 
-            return "4 iron ingots";
-     
-        case IRON_LEGGINGS: 
-        case CHAINMAIL_LEGGINGS: 
-            return "3 iron ingots";
-     
-        case IRON_BOOTS: 
-        case IRON_HELMET: 
-        case CHAINMAIL_BOOTS: 
-        case CHAINMAIL_HELMET: 
-            return "2 iron ingots";
-    
-        case GOLDEN_CHESTPLATE: 
-            return "4 gold ingots";
-     
-        case GOLDEN_LEGGINGS: 
-            return "3 gold ingots";
-    
-        case GOLDEN_BOOTS: 
-        case GOLDEN_HELMET: 
-            return "2 gold ingots";
-     
-        case LEATHER_CHESTPLATE: 
-            return "4 leather";
-     
-        case LEATHER_LEGGINGS: 
-            return "3 leather";
-     
-        case LEATHER_BOOTS: 
-        case LEATHER_HELMET: 
-            return "2 leather";
-     
-        case SHEARS: 
-            return "1 iron ingot";
-     
-        case BOW: 
-            return "1 log";
-     
-        case FISHING_ROD: 
-            return "1 log";
+            case BOW:
+            case FISHING_ROD:
+                return "1 log";
         }
      
         return null;
     }
 
-    public static boolean removeReagents(ItemStack repair, Inventory inv)
-    {
+    public static boolean removeReagents(ItemStack repair, Inventory inv) {
+        
         ItemStack[] inventory = inv.getContents();
         
         String cost = getRepairCost(repair);
         Material material;
-        if (cost.contains("diamond"))
+        if (cost == null) 
+            return false;
+        else if (cost.contains("diamond"))
             material = Material.DIAMOND;
         else if (cost.contains("iron ingot"))
             material = Material.IRON_INGOT;
@@ -252,12 +267,12 @@ public class RepairCommand
         
         if (!item.hasItemMeta()) return;
         ItemMeta meta = item.getItemMeta();
-        if (!meta.hasEnchants()) return;
+        if (meta == null ||!meta.hasEnchants()) return;
 
         for (Map.Entry<Enchantment, Integer> entry : meta.getEnchants().entrySet()) {
-            Enchantment e = (Enchantment)entry.getKey();
+            Enchantment e = entry.getKey();
             if(!e.isCursed()) {
-                int level = ((Integer)entry.getValue()).intValue();
+                int level = entry.getValue();
                 
                 meta.removeEnchant(e);
                 if (level > 1) meta.addEnchant(e, level - 1, true);

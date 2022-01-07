@@ -1,7 +1,6 @@
 package org.cubeville.cvranks;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -51,13 +50,13 @@ public class LevelCommand
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
-        if(item == null || item.getType() == Material.AIR) {
+        if(item.getType() == Material.AIR) {
             sender.sendMessage("§cPlease hold the item you want to level up.");
             return;
         }
 
         ItemMeta meta = item.getItemMeta();
-        if (!meta.hasEnchants()) {
+        if (meta == null || !meta.hasEnchants()) {
             sender.sendMessage("§cThat item isn't enchanted.");
             return;
         }
@@ -120,7 +119,7 @@ public class LevelCommand
     private Enchantment getEnchantmentByName(String enchantmentName) {
         for(Enchantment enchantment: names.keySet()) {
             for(String name: names.get(enchantment)) {
-                if(enchantmentName.toLowerCase().equals(name.toLowerCase())) return enchantment;
+                if(enchantmentName.equalsIgnoreCase(name)) return enchantment;
             }
         }
         return null;

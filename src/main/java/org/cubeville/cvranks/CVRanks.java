@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,15 +12,20 @@ import java.util.UUID;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -31,13 +37,13 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.block.Block;
+import org.bukkit.scheduler.BukkitScheduler;
 
-public class CVRanks extends JavaPlugin implements Listener
-{
+public class CVRanks extends JavaPlugin implements Listener {
+    
     private int uptime;
+    
     private Map<UUID, Integer> lastHeals;
     private Map<UUID, Integer> lastRespawns;
     private Map<UUID, Integer> lastDeathHound;
@@ -57,7 +63,6 @@ public class CVRanks extends JavaPlugin implements Listener
     private Set<UUID> scubaActive;
     private Set<UUID> nightstalkerActive;
     private Set<UUID> smeltActive;
-    private Map<UUID, Integer> lastRepairs;
 
     private LevelCommand levelCommand;
     private RepairCommand repairCommand;
@@ -84,42 +89,87 @@ public class CVRanks extends JavaPlugin implements Listener
         lastKeepXP = new HashMap<>();
         
         uptime = 0;
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-                public void run() {
-                    uptime += 10;
-                    for(UUID player: lastHeals.keySet()) {
-                        Player p = getServer().getPlayer(player);
-                        if(p == null || docTime(p) <= 0) {
-                            if(p != null) p.sendMessage("Your doctor ability is ready to use.");
-                            lastHeals.remove(player);
-                        }
-                    }
-
-                    for(UUID player: lastRespawns.keySet()) {
-                        Player p = getServer().getPlayer(player);
-                        if(p == null || respawnTime(p) <= 0) {
-                            if(p != null) p.sendMessage("Your respawn ability is ready to use.");
-                            lastRespawns.remove(player);
-                        }
-                    }
-
-                    for(UUID player: lastDeathHound.keySet()) {
-                        Player p = getServer().getPlayer(player);
-                        if(p == null || deathHoundTime(p) <= 0) {
-                            if(p != null) p.sendMessage("Your death hound ability is ready to use.");
-                            lastDeathHound.remove(player);
-                        }                        
-                    }
+        
+        final Server server = getServer();
+        final BukkitScheduler scheduler = server.getScheduler();
+        
+        // Notify timer. Currently notifies for the following:
+        // - Doc ability ready to use
+        // - Respawn ability ready to use
+        // - DeathHound ability ready to use
+        // - Keep-inventory cooldown expired (able to die without losing items)
+        // - Keep-XP cooldown expired (able to die without losing XP)
+        scheduler.runTaskTimer(this, () -> {
+            
+            uptime += 10;
+            
+            Iterator<Map.Entry<UUID, Integer>> iter = lastHeals.entrySet().iterator();
+            while (iter.hasNext()) {
+                Player p = server.getPlayer(iter.next().getKey());
+                if (p != null && docTime(p) <= 0) {
+                    p.sendMessage("§aYour doctor ability is ready to use.");
+                    iter.remove();
                 }
-            }, 200, 200);
+            }
+            
+            iter = lastRespawns.entrySet().iterator();
+            while (iter.hasNext()) {
+                Player p = server.getPlayer(iter.next().getKey());
+                if (p != null && respawnTime(p) <= 0) {
+                    p.sendMessage("§aYour respawn ability is ready to use.");
+                    iter.remove();
+                }
+            }
+            
+            iter = this.lastDeathHound.entrySet().iterator();
+            while (iter.hasNext()) {
+                Player p = server.getPlayer(iter.next().getKey());
+                if (p != null && deathHoundTime(p) <= 0) {
+                    p.sendMessage("§aYour death hound ability is ready to use.");
+                    iter.remove();
+                }
+            }
+    
+            iter = this.lastKeepsake.entrySet().iterator();
+            while (iter.hasNext()) {
+                Player p = server.getPlayer(iter.next().getKey());
+                if (p != null && keepsakeTime(p) <= 0) {
+                    p.sendMessage("§aYour keepinventory cooldown has expired.");
+                    iter.remove();
+                }
+            }
+    
+            iter = this.lastKeepXP.entrySet().iterator();
+            while (iter.hasNext()) {
+                Player p = server.getPlayer(iter.next().getKey());
+                if (p != null && keepXPTime(p) <= 0) {
+                    p.sendMessage("§aYour keep-XP cooldown has expired.");
+                    iter.remove();
+                }
+            }
+            
+        }, 200, 200);
+        
+        // Nightstalker applying night vision. This is due to staff
+        // that come out of vanish losing their night vision from vanish,
+        // and not being re-applied by this plugin.
+        scheduler.runTaskTimer(this, () -> {
+            
+            for (UUID uuid : nightstalkerActive) {
+                Player p = server.getPlayer(uuid);
+                if (p != null && !p.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
+                }
+            }
+        }, 40L, 40L);
 
-        PluginManager pm = getServer().getPluginManager();
+        PluginManager pm = server.getPluginManager();
         pm.registerEvents(this, this);
 
         File dataFolder = getDataFolder();
         if(!dataFolder.exists()) dataFolder.mkdirs();
 
-        getServer().addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape(new String[] { "XXX", "XXX" }).setIngredient('X', Material.LEATHER));
+        server.addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape(new String[] { "XXX", "XXX" }).setIngredient('X', Material.LEATHER));
 
         repairCommand = new RepairCommand(this);
         if(getConfig().getConfigurationSection("enchantments") != null) {
@@ -132,13 +182,15 @@ public class CVRanks extends JavaPlugin implements Listener
         return uptime;
     }
     
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Player senderPlayer = null;
-        UUID senderId = null;
-        if(sender instanceof Player) {
-            senderPlayer = (Player) sender;
-            senderId = senderPlayer.getUniqueId();
+    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
+        
+        if(!(commandSender instanceof Player)) {
+            commandSender.sendMessage("§cThe CVRanks commands can only be run by a player!");
+            return true;
         }
+        
+        Player sender = (Player) commandSender;
+        UUID senderId = sender.getUniqueId();
 
         if(command.getName().equals("level")) {
             levelCommand.onLevelCommand(sender, args);
@@ -248,8 +300,8 @@ public class CVRanks extends JavaPlugin implements Listener
                     typeSet.add(senderId);
                     sender.sendMessage("§aYour " + typeName + " ability has been enabled.");
                 }
-                if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, true);
-                if(typeName.equals("scuba")) activateScuba(senderPlayer, true);
+                if(typeName.equals("nightstalker")) activateNightstalker(sender, true);
+                if(typeName.equals("scuba")) activateScuba(sender, true);
             }
             else if(args[argOffset].equals("off")) {
                 if(typeSet.contains(senderId)) {
@@ -259,8 +311,8 @@ public class CVRanks extends JavaPlugin implements Listener
                 else {
                     sender.sendMessage("§cYour " + typeName + " ability is already disabled.");
                 }
-                if(typeName.equals("nightstalker")) activateNightstalker(senderPlayer, false);
-                if(typeName.equals("scuba")) activateScuba(senderPlayer, false);
+                if(typeName.equals("nightstalker")) activateNightstalker(sender, false);
+                if(typeName.equals("scuba")) activateScuba(sender, false);
             }
             else {
                 sender.sendMessage("§c/" + viewCommand + " [on|off]");
@@ -284,7 +336,7 @@ public class CVRanks extends JavaPlugin implements Listener
                 if(args[0].equals("list")) {
                     boolean found = false;
                     for (Player p : getServer().getOnlinePlayers()) {
-                        if(p.hasPermission("cvranks.death.hound") && !p.hasPermission("cvranks.death.hound.hidefromlist") && senderPlayer.canSee(p)) {
+                        if(p.hasPermission("cvranks.death.hound") && !p.hasPermission("cvranks.death.hound.hidefromlist") && sender.canSee(p)) {
                             found = true;
                             UUID playerId = p.getUniqueId();
                             String dhName = p.getDisplayName();
@@ -299,18 +351,18 @@ public class CVRanks extends JavaPlugin implements Listener
                     if(!found) { sender.sendMessage("§cNo Death Hounds online."); }
                 }
                 else {
-                    if(!senderPlayer.hasPermission("cvranks.death.hound")) {
+                    if(!sender.hasPermission("cvranks.death.hound")) {
                         sender.sendMessage("§cNo permission.");
                     }
-                    else if(deathHoundTime(senderPlayer) > 0) {
-                        sender.sendMessage("§cYou cannot use your Death Hound abilities for another " + deathHoundTime(senderPlayer) + " seconds.");
+                    else if(deathHoundTime(sender) > 0) {
+                        sender.sendMessage("§cYou cannot use your Death Hound abilities for another " + deathHoundTime(sender) + " seconds.");
                     }
                     else {
                         Player target;
-                        if(args[0].equals("me")) { target = senderPlayer; }
+                        if(args[0].equals("me")) { target = sender; }
                         else { target = getServer().getPlayerExact(args[0]); }
                         
-                        if(target == null || !target.isOnline() || !senderPlayer.canSee(target)) {
+                        if(target == null || !target.isOnline() || !sender.canSee(target)) {
                             sender.sendMessage("§cPlayer is not online or is not on survival.");
                         }
                         else if (!deathLocation.containsKey(target.getUniqueId())) {
@@ -320,16 +372,16 @@ public class CVRanks extends JavaPlugin implements Listener
                             sender.sendMessage("§cPlayer has already had their death coordinates sent or has used /respawn.");
                         }
                         else {
-                            resetDeathHoundTime(senderPlayer);
+                            resetDeathHoundTime(sender);
                             pendingDeathHoundNotification.remove(target.getUniqueId());
                             Location dl = deathLocation.get(target.getUniqueId());
                             
-                            if(target.getUniqueId().equals(senderPlayer.getUniqueId())) {
+                            if(target.getUniqueId().equals(senderId)) {
                                 target.sendMessage("§aYour last death coordinates:");
                             }
                             else {
                                 sender.sendMessage("§aYou have sent §6" + target.getName() + "§a's death coordinates to them.");
-                                target.sendMessage("§6" + senderPlayer.getName() + " §ais sending you your last death coordinates:");
+                                target.sendMessage("§6" + sender.getName() + " §ais sending you your last death coordinates:");
                             }
                             
                             target.sendMessage("§aX: §6" + dl.getBlockX() + "§a, Y: §6" + dl.getBlockY() + "§a, Z: §6" + dl.getBlockZ());
@@ -355,7 +407,7 @@ public class CVRanks extends JavaPlugin implements Listener
                 if(args[0].equals("list")) {
                     boolean found = false;
                     for (Player p : getServer().getOnlinePlayers()) {
-                        if(p.hasPermission("cvranks.service.dr") == true && p.hasPermission("cvranks.service.dr.hidefromlist") == false && senderPlayer.canSee(p) == true) {
+                        if(p.hasPermission("cvranks.service.dr") && !p.hasPermission("cvranks.service.dr.hidefromlist") && sender.canSee(p)) {
                             found = true;
                             UUID playerId = p.getUniqueId();
                             String docName = p.getDisplayName();
@@ -367,26 +419,24 @@ public class CVRanks extends JavaPlugin implements Listener
                             }
                         }
                     }
-                    if(found == false) sender.sendMessage("§cNo doctors online.");
+                    if(!found) sender.sendMessage("§cNo doctors online.");
                 }
                 else if(args[0].equals("me")) {
-                    if(senderPlayer != null) {
-                        if(!senderPlayer.hasPermission("cvranks.service.dr")) {
+                        if(!sender.hasPermission("cvranks.service.dr")) {
                             sender.sendMessage("§cNo permission.");
                         }
                         else {
-                            docPlayer(sender, senderPlayer);
+                            docPlayer(sender, sender);
                         }
-                    }
                 }
                 else {
-                    if(!senderPlayer.hasPermission("cvranks.service.dr")) {
+                    if(!sender.hasPermission("cvranks.service.dr")) {
                         sender.sendMessage("§cNo permission.");
                     }
                     else {
                         String playerName = args[0];
                         Player player = getServer().getPlayer(playerName);
-                        if(player == null || senderPlayer.canSee(player) == false) {
+                        if(player == null || !player.isOnline() || !sender.canSee(player)) {
                             sender.sendMessage("§cPlayer not found.");
                         }
                         else {
@@ -399,16 +449,16 @@ public class CVRanks extends JavaPlugin implements Listener
         }
 
         else if (command.getName().equals("respawn")) {
-            if(senderPlayer != null && deathLocation.containsKey(senderId)) {
-                if(respawnTime(senderPlayer) > 0) {
-                    sender.sendMessage("§cYour respawn cooldown is still at " + respawnTime(senderPlayer) + " seconds.");
+            if(deathLocation.containsKey(senderId)) {
+                if(respawnTime(sender) > 0) {
+                    sender.sendMessage("§cYour respawn cooldown is still at " + respawnTime(sender) + " seconds.");
                 }
                 else {
-                    senderPlayer.teleport(deathLocation.get(senderId));
+                    sender.teleport(deathLocation.get(senderId));
                     deathLocation.remove(senderId);
                     pendingDeathHoundNotification.remove(senderId);
                     sender.sendMessage("§aYou have been returned to the point of your last death!");
-                    resetRespawnTime(senderPlayer);
+                    resetRespawnTime(sender);
                 }
             }
             else {
@@ -420,24 +470,13 @@ public class CVRanks extends JavaPlugin implements Listener
     }
 
     public void activateScuba(Player player, boolean status) {
-        if(status) {
-            PotionEffect scuba = new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1);
-            player.addPotionEffect(scuba);
-            
-        }
-        else {
-            player.removePotionEffect(PotionEffectType.WATER_BREATHING);
-        }
+        if(status) player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1));
+        else player.removePotionEffect(PotionEffectType.WATER_BREATHING);
     }
 
     public void activateNightstalker(Player player, boolean status) {
-        if(status) {
-            PotionEffect ns = new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1);
-            player.addPotionEffect(ns);
-        }
-        else {
-            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-        }
+        if(status) player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
+        else player.removePotionEffect(PotionEffectType.NIGHT_VISION);
     }
 
     @EventHandler
@@ -503,26 +542,20 @@ public class CVRanks extends JavaPlugin implements Listener
         lastKeepXP.put(player.getUniqueId(), uptime);
     }
 
-    public void docPlayer(CommandSender sender, Player target) {
+    public void docPlayer(Player sender, Player target) {
         boolean used = false;
 
         String senderName;
-
-        if(sender instanceof Player) {
-            Player senderPlayer = (Player) sender;
-            if(lastHeals.containsKey(senderPlayer.getUniqueId())) {
-                sender.sendMessage("§cYour doctor ability is not ready to use yet.");
-                return;
-            }
-            if(senderPlayer.getUniqueId().equals(target.getUniqueId())) {
-                senderName = "yourself";
-            }
-            else {
-                senderName = senderPlayer.getDisplayName();
-            }
+        
+        if(lastHeals.containsKey(sender.getUniqueId())) {
+            sender.sendMessage("§cYour doctor ability is not ready to use yet.");
+            return;
+        }
+        if(sender.getUniqueId().equals(target.getUniqueId())) {
+            senderName = "yourself";
         }
         else {
-            senderName = "Console";
+            senderName = sender.getDisplayName();
         }
 
         if (target.isDead()) {
@@ -560,10 +593,7 @@ public class CVRanks extends JavaPlugin implements Listener
 
         if(used) {
             sender.sendMessage(target.getDisplayName() + " has been healed.");
-            if(sender instanceof Player) {
-                Player p = (Player) sender;
-                lastHeals.put(p.getUniqueId(), uptime);
-            }
+            lastHeals.put(sender.getUniqueId(), uptime);
         }
         else {
             sender.sendMessage(target.getDisplayName() + " does not need to be healed!");
@@ -618,10 +648,8 @@ public class CVRanks extends JavaPlugin implements Listener
             Inventory inventory = player.getInventory();
             for(int i = 0; i < inventory.getSize(); i++) {
                 ItemStack item = inventory.getItem(i);
-                if(item != null) {
-                    if(item.getEnchantmentLevel(Enchantment.VANISHING_CURSE) > 0) {
+                if(item != null && item.getEnchantmentLevel(Enchantment.VANISHING_CURSE) > 0) {
                         inventory.clear(i);
-                    }
                 }
             }
         }
@@ -642,90 +670,78 @@ public class CVRanks extends JavaPlugin implements Listener
         pendingDeathHoundNotification.add(player.getUniqueId());
         deathLocation.put(player.getUniqueId(), player.getLocation());
     }
-
-//    @EventHandler
-//    public void onCraftItem(CraftItemEvent event)
-//    {
-//        if(event.isCancelled()) return;
-//        if (!(event.getRecipe() instanceof ShapedRecipe)) return;
-//        if (event.getRecipe().getResult().getType() != Material.SADDLE) return;
-//        if (!(event.getView().getPlayer() instanceof Player)) return;
-//        Player player = (Player)event.getView().getPlayer();
-//        if (!player.hasPermission("cvranks.leatherworker")) event.setCancelled(true);
-//    }
     
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if(event.isCancelled()) return;
         Player player = event.getPlayer();
-        boolean smelt = smeltActive.contains(player.getUniqueId());
         Block target = event.getBlock();
-
+        Material targetType = target.getType();
+        
         boolean permPs = player.hasPermission("cvranks.mining.ps");
         boolean permPsExtraOre = player.hasPermission("cvranks.mining.ps.ore");
         boolean permPsExtraLogs = player.hasPermission("cvranks.mining.ps.logs");
         boolean permPsExtraFlint = player.hasPermission("cvranks.mining.ps.flint");
-
+        
         if(permPs || permPsExtraOre || permPsExtraLogs || permPsExtraFlint) { // TODO: ugh, lag
             ItemStack tool = player.getInventory().getItemInMainHand();
-            if(tool == null || (tool.containsEnchantment(Enchantment.SILK_TOUCH) && (target.getType() != Material.ACACIA_LOG && target.getType() != Material.BIRCH_LOG && target.getType() != Material.DARK_OAK_LOG && target.getType() != Material.JUNGLE_LOG && target.getType() != Material.OAK_LOG && target.getType() != Material.SPRUCE_LOG))) return;
+            Material toolType = tool.getType();
+            if (tool.containsEnchantment(Enchantment.SILK_TOUCH) && !isLog(targetType) && !isStrippedLog(targetType)) return;
             
             int rand = (int)Math.floor(100.0D * Math.random()) + 1;
             ItemStack drop = null;
             int chance = -1;
             String message = "";
             
-            if(target.getType() == Material.DIAMOND_ORE) {
+            if(targetType == Material.DIAMOND_ORE || targetType == Material.DEEPSLATE_DIAMOND_ORE) {
                 if(permPs || permPsExtraOre) {
-                    if(tool.getType() == Material.DIAMOND_PICKAXE || tool.getType() == Material.NETHERITE_PICKAXE) chance = 8;
+                    if(toolType == Material.DIAMOND_PICKAXE || toolType == Material.NETHERITE_PICKAXE) chance = 8;
                     drop = new ItemStack(Material.DIAMOND);
                     message = "§aYou found an extra diamond.";
                 }
             }
-            else if(target.getType() == Material.COAL_ORE) {
+            else if(targetType == Material.COAL_ORE || targetType == Material.DEEPSLATE_COAL_ORE) {
                 if(permPs || permPsExtraOre) {
-                    if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
-                    else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
-                    else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                    else if(tool.getType() == Material.NETHERITE_PICKAXE) chance = 20;
-                    else if(tool.getType() == Material.GOLDEN_PICKAXE) chance = 24;
+                    if(toolType == Material.STONE_PICKAXE) chance = 4;
+                    else if(toolType == Material.IRON_PICKAXE) chance = 8;
+                    else if(toolType == Material.DIAMOND_PICKAXE) chance = 16;
+                    else if(toolType == Material.NETHERITE_PICKAXE) chance = 20;
+                    else if(toolType == Material.GOLDEN_PICKAXE) chance = 24;
                     drop = new ItemStack(Material.COAL);
                     message = "§aYou found extra coal.";
                 }
             }
-            else if(target.getType() == Material.NETHER_QUARTZ_ORE) {
+            else if(targetType == Material.NETHER_QUARTZ_ORE) {
                 if(permPs || permPsExtraOre) {
-                    if(tool.getType() == Material.STONE_PICKAXE) chance = 4;
-                    else if(tool.getType() == Material.IRON_PICKAXE) chance = 8;
-                    else if(tool.getType() == Material.DIAMOND_PICKAXE) chance = 16;
-                    else if(tool.getType() == Material.NETHERITE_PICKAXE) chance = 20;
-                    else if(tool.getType() == Material.GOLDEN_PICKAXE) chance = 24;
+                    if(toolType == Material.STONE_PICKAXE) chance = 4;
+                    else if(toolType == Material.IRON_PICKAXE) chance = 8;
+                    else if(toolType == Material.DIAMOND_PICKAXE) chance = 16;
+                    else if(toolType == Material.NETHERITE_PICKAXE) chance = 20;
+                    else if(toolType == Material.GOLDEN_PICKAXE) chance = 24;
                     drop = new ItemStack(Material.QUARTZ);
-                    message = "§aYou found extra quartz";
-                }
-            } 
-            else if(target.getType() == Material.GRAVEL) {
-                if(permPs || permPsExtraFlint) {
-                    if(tool.getType() == Material.STONE_SHOVEL) chance = 4;
-                    else if(tool.getType() == Material.IRON_SHOVEL) chance = 8;
-                    else if(tool.getType() == Material.DIAMOND_SHOVEL) chance = 16;
-                    else if(tool.getType() == Material.NETHERITE_SHOVEL) chance = 20;
-                    else if(tool.getType() == Material.GOLDEN_SHOVEL) chance = 24;
-                    drop = new ItemStack(Material.FLINT);
-                    message = "§aYou found extra flint";
+                    message = "§aYou found extra quartz.";
                 }
             }
-            else if(target.getType() == Material.ACACIA_LOG || target.getType() == Material.BIRCH_LOG ||
-                    target.getType() == Material.DARK_OAK_LOG || target.getType() == Material.JUNGLE_LOG ||
-                    target.getType() == Material.OAK_LOG || target.getType() == Material.SPRUCE_LOG) {
+            else if(targetType == Material.GRAVEL) {
+                if(permPs || permPsExtraFlint) {
+                    if(toolType == Material.STONE_SHOVEL) chance = 4;
+                    else if(toolType == Material.IRON_SHOVEL) chance = 8;
+                    else if(toolType == Material.DIAMOND_SHOVEL) chance = 16;
+                    else if(toolType == Material.NETHERITE_SHOVEL) chance = 20;
+                    else if(toolType == Material.GOLDEN_SHOVEL) chance = 24;
+                    drop = new ItemStack(Material.FLINT);
+                    message = "§aYou found extra flint.";
+                }
+            }
+            else if(isLog(targetType) || isStrippedLog(targetType)) {
                 if(permPs || permPsExtraLogs) {
-                    if(tool.getType() == Material.STONE_AXE) chance = 4;
-                    else if(tool.getType() == Material.IRON_AXE) chance = 8;
-                    else if(tool.getType() == Material.DIAMOND_AXE) chance = 16;
-                    else if(tool.getType() == Material.NETHERITE_AXE) chance = 20;
-                    else if(tool.getType() == Material.GOLDEN_AXE) chance = 24;
-                    drop = new ItemStack(target.getType());
-                    message = "§aYou found extra wood";
+                    if(toolType == Material.STONE_AXE) chance = 4;
+                    else if(toolType == Material.IRON_AXE) chance = 8;
+                    else if(toolType == Material.DIAMOND_AXE) chance = 16;
+                    else if(toolType == Material.NETHERITE_AXE) chance = 20;
+                    else if(toolType == Material.GOLDEN_AXE) chance = 24;
+                    drop = new ItemStack(targetType);
+                    message = "§aYou found extra wood.";
                 }
             }
             if(drop != null && rand <= chance) {
@@ -733,37 +749,117 @@ public class CVRanks extends JavaPlugin implements Listener
                 player.getWorld().dropItemNaturally(target.getLocation(), drop);
             }
         }
-        if(smelt) {
-            ItemStack drop = null;
-            if(target.getType() == Material.IRON_ORE) {
-                drop = new ItemStack(Material.IRON_INGOT);
-            }
-            else if(target.getType() == Material.GOLD_ORE) {
-                drop = new ItemStack(Material.GOLD_INGOT);
-            }
-            if(drop != null) {
-                event.setCancelled(true);
-                target.setType(Material.AIR);
-                int exp = 1;
-                if(player.hasPermission("cvranks.mining.mp") && Math.random() < 0.15) {
-                    exp = 2;
-                    drop.setAmount(2);
-                    player.sendMessage("§aYou found an extra ingot.");
-                }
-                player.giveExp(exp);
-                player.getWorld().dropItemNaturally(target.getLocation(), drop);
-            }
-        }
-        if(target.getType() == Material.COAL_ORE && Math.random() < 0.02 && player.hasPermission("cvranks.mining.mp")) {
+        if((targetType == Material.COAL_ORE || targetType == Material.DEEPSLATE_COAL_ORE) && Math.random() < 0.02 && player.hasPermission("cvranks.mining.mp")) {
             ItemStack drop = new ItemStack(Material.DIAMOND);
             player.getWorld().dropItemNaturally(target.getLocation(), drop);
             player.sendMessage("§aYou found a diamond.");
         }
     }
+    
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockDropItem(BlockDropItemEvent event) {
+        
+        if(event.isCancelled()) return;
+    
+        BlockState blockState = event.getBlockState();
+        Material blockType = blockState.getType();
+        
+        if (!isIngotOre(blockType)) return;
+        
+        Player player = event.getPlayer();
+        ItemStack tool = player.getInventory().getItemInMainHand();
+                
+        if (tool.containsEnchantment(Enchantment.SILK_TOUCH)) return;
+        
+        boolean smelt = smeltActive.contains(player.getUniqueId());
+        World world = blockState.getWorld();
+        Location location = new Location(world, blockState.getX(), blockState.getY() + 0.5D, blockState.getZ());
+        
+        Iterator<Item> iter = event.getItems().iterator();
+        while (iter.hasNext()) {
+            
+            ItemStack drop = iter.next().getItemStack();
+            int dropAmount = drop.getAmount();
+            Material dropType = drop.getType();
+            Material newDropType;
+            String newDropName;
+            
+            if (dropType == Material.RAW_IRON) {
+                newDropType = smelt ? Material.IRON_INGOT : Material.RAW_IRON;
+                newDropName = smelt ? "iron ingot" : "piece of raw iron";
+            } else if (dropType == Material.RAW_GOLD) {
+                newDropType = smelt ? Material.GOLD_INGOT : Material.RAW_GOLD;
+                newDropName = smelt ? "gold ingot" : "piece of raw gold";
+            } else if (dropType == Material.RAW_COPPER) {
+                newDropType = smelt ? Material.COPPER_INGOT : Material.RAW_COPPER;
+                newDropName = smelt ? "copper ingot" : "piece of raw copper";
+            } else {
+                continue;
+            }
+            
+            if (player.hasPermission("cvranks.mining.mp") && Math.random() < 0.15D) {
+                player.giveExp(1);
+                dropAmount++;
+                player.sendMessage("§aYou have found an extra " + newDropName + ".");
+            }
+            
+            world.dropItemNaturally(location, new ItemStack(newDropType, dropAmount));
+            iter.remove();
+        }
+    }
+    
+    private boolean isLog(Material blockType) {
+        switch (blockType) {
+            case OAK_LOG:
+            case BIRCH_LOG:
+            case SPRUCE_LOG:
+            case DARK_OAK_LOG:
+            case ACACIA_LOG:
+            case JUNGLE_LOG:
+            case CRIMSON_HYPHAE:
+            case WARPED_HYPHAE:
+                return true;
+            default:
+                return false;
+        }
+    }
+    
+    private boolean isStrippedLog(Material blockType) {
+        switch (blockType) {
+            case STRIPPED_OAK_LOG:
+            case STRIPPED_BIRCH_LOG:
+            case STRIPPED_SPRUCE_LOG:
+            case STRIPPED_DARK_OAK_LOG:
+            case STRIPPED_ACACIA_LOG:
+            case STRIPPED_JUNGLE_LOG:
+            case STRIPPED_CRIMSON_HYPHAE:
+            case STRIPPED_WARPED_HYPHAE:
+                return true;
+            default:
+                return false;
+        }
+    }
+    
+    private boolean isIngotOre(Material blockType) {
+        switch (blockType) {
+            case IRON_ORE:
+            case DEEPSLATE_IRON_ORE:
+            case GOLD_ORE:
+            case DEEPSLATE_GOLD_ORE:
+            case COPPER_ORE:
+            case DEEPSLATE_COPPER_ORE:
+                return true;
+            default:
+                return false;
+        }
+    }
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        if (event.getEntity().getKiller().hasPermission("cvranks.leatherworker")) {
+        
+        Player killer = event.getEntity().getKiller();
+        if (killer == null) return;
+        if (killer.hasPermission("cvranks.leatherworker")) {
 
             List<EntityType> leatherAnimals = new ArrayList<>();
             leatherAnimals.add(EntityType.COW);
@@ -774,12 +870,9 @@ public class CVRanks extends JavaPlugin implements Listener
             leatherAnimals.add(EntityType.LLAMA);
 
             if (leatherAnimals.contains(event.getEntity().getType())) {
-                Player killer = event.getEntity().getKiller();
-                if(killer != null) {
-                    ItemStack drop = new ItemStack(Material.LEATHER);
-                    killer.getWorld().dropItemNaturally(event.getEntity().getLocation(), drop);
-                    killer.sendMessage("§aYou got extra leather.");
-                }
+                ItemStack drop = new ItemStack(Material.LEATHER);
+                killer.getWorld().dropItemNaturally(event.getEntity().getLocation(), drop);
+                killer.sendMessage("§aYou got extra leather.");
             }
         }
     }
