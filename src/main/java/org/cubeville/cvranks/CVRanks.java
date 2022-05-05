@@ -203,7 +203,7 @@ public class CVRanks extends JavaPlugin implements Listener {
             return true;
         }
         
-        else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt") || command.getName().equals("mr")) {
+        else if (command.getName().equals("mason") || command.getName().equals("mush") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt") || command.getName().equals("mr")) {
             
             Set<UUID> typeSet;
             String typeName;
@@ -214,7 +214,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                 typeSet = stonemasonActive;
                 typeName = "stonemason";
             }
-            else if(typeCommand.equals("mg")) {
+            else if(typeCommand.equals("mush")) {
                 typeSet = mushgardenerActive;
                 typeName = "mushgardener";
             }

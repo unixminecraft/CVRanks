@@ -29,7 +29,7 @@ commands:
     description: Activate stonemason
     permission: cvranks.build.stonemason
 
-  mg:
+  mush:
     description: Mush gardener
     permission: cvranks.build.mushgardener
 
