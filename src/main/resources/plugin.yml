@@ -1,6 +1,6 @@
 name: CVRanks
 main: org.cubeville.cvranks.CVRanks
-author: FrediW, RandomRob13, mciolkosz
+author: FrediW, RandomRob13, mciolkosz, Ptown16
 version: 0.1
 api-version: 1.18
 
@@ -30,8 +30,8 @@ commands:
     permission: cvranks.build.stonemason
 
   mg:
-    description: Moss gardener
-    permission: cvranks.build.mossgardener
+    description: Mush gardener
+    permission: cvranks.build.mushgardener
 
   brick:
     description: Brick layer

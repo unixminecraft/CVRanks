@@ -52,9 +52,9 @@ public class CVRanks extends JavaPlugin implements Listener {
     
     private Map<UUID, Location> deathLocation;
     private Set<UUID> pendingDeathHoundNotification;
-
+    
     private Set<UUID> stonemasonActive;
-    private Set<UUID> mossgardenerActive;
+    private Set<UUID> mushgardenerActive;
     private Set<UUID> bricklayerActive;
     private Set<UUID> carpenterActive;
     private Set<UUID> mrGlassActive;
@@ -63,13 +63,13 @@ public class CVRanks extends JavaPlugin implements Listener {
     private Set<UUID> scubaActive;
     private Set<UUID> nightstalkerActive;
     private Set<UUID> smeltActive;
-
+    
     private LevelCommand levelCommand;
     private RepairCommand repairCommand;
     
     public void onEnable() {
         stonemasonActive = new HashSet<>();
-        mossgardenerActive = new HashSet<>();
+        mushgardenerActive = new HashSet<>();
         bricklayerActive = new HashSet<>();
         carpenterActive = new HashSet<>();
         scubaActive = new HashSet<>();
@@ -129,7 +129,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                     iter.remove();
                 }
             }
-    
+            
             iter = this.lastKeepsake.entrySet().iterator();
             while (iter.hasNext()) {
                 Player p = server.getPlayer(iter.next().getKey());
@@ -138,7 +138,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                     iter.remove();
                 }
             }
-    
+            
             iter = this.lastKeepXP.entrySet().iterator();
             while (iter.hasNext()) {
                 Player p = server.getPlayer(iter.next().getKey());
@@ -162,22 +162,21 @@ public class CVRanks extends JavaPlugin implements Listener {
                 }
             }
         }, 40L, 40L);
-
+        
         PluginManager pm = server.getPluginManager();
         pm.registerEvents(this, this);
-
+        
         File dataFolder = getDataFolder();
         if(!dataFolder.exists()) dataFolder.mkdirs();
-
+        
         server.addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape(new String[] { "XXX", "XXX" }).setIngredient('X', Material.LEATHER));
-
+        
         repairCommand = new RepairCommand(this);
         if(getConfig().getConfigurationSection("enchantments") != null) {
             levelCommand = new LevelCommand(getConfig().getConfigurationSection("enchantments"), this);
         }
-
     }
-
+    
     public int getUptime() {
         return uptime;
     }
@@ -191,19 +190,19 @@ public class CVRanks extends JavaPlugin implements Listener {
         
         Player sender = (Player) commandSender;
         UUID senderId = sender.getUniqueId();
-
+        
         if(command.getName().equals("level")) {
             levelCommand.onLevelCommand(sender, args);
             return true;
         }
-
+        
         else if(command.getName().equals("rp")) {
             repairCommand.onRepairCommand(sender, args);
             return true;
         }
         
         else if (command.getName().equals("mason") || command.getName().equals("mg") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt") || command.getName().equals("mr")) {
-
+            
             Set<UUID> typeSet;
             String typeName;
             String typeCommand = command.getName();
@@ -214,8 +213,8 @@ public class CVRanks extends JavaPlugin implements Listener {
                 typeName = "stonemason";
             }
             else if(typeCommand.equals("mg")) {
-                typeSet = mossgardenerActive;
-                typeName = "moss gardener";
+                typeSet = mushgardenerActive;
+                typeName = "mushgardener";
             }
             else if(typeCommand.equals("brick")) {
                 typeSet = bricklayerActive;
@@ -273,7 +272,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                 sender.sendMessage("§cUnknown command.");
                 return true;
             }
-
+            
             if(args.length - argOffset > 1) {
                 sender.sendMessage("§cToo many arguments.");
                 sender.sendMessage("§c/" + viewCommand + " [on|off]");
@@ -291,7 +290,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                 }
                 return true;
             }
-
+            
             if(args[argOffset].equals("on")) {
                 if(typeSet.contains(senderId)) {
                     sender.sendMessage("§cYour " + typeName + " ability is already enabled.");
@@ -319,7 +318,7 @@ public class CVRanks extends JavaPlugin implements Listener {
             }
             return true;
         }
-
+        
         else if (command.getName().equals("dh")) {
             if(args.length == 0) {
                 sender.sendMessage("§2Death Hound Command List");
@@ -447,7 +446,7 @@ public class CVRanks extends JavaPlugin implements Listener {
             }
             return true;
         }
-
+        
         else if (command.getName().equals("respawn")) {
             if(deathLocation.containsKey(senderId)) {
                 if(respawnTime(sender) > 0) {
@@ -544,7 +543,7 @@ public class CVRanks extends JavaPlugin implements Listener {
 
     public void docPlayer(Player sender, Player target) {
         boolean used = false;
-
+        
         String senderName;
         
         if(lastHeals.containsKey(sender.getUniqueId())) {
@@ -557,7 +556,7 @@ public class CVRanks extends JavaPlugin implements Listener {
         else {
             senderName = sender.getDisplayName();
         }
-
+        
         if (target.isDead()) {
             target.sendMessage("§a" + senderName + " tried to doc you, but it was too late.");
             sender.sendMessage("§cToo late...");
@@ -569,7 +568,7 @@ public class CVRanks extends JavaPlugin implements Listener {
             target.setHealth(target.getMaxHealth());
             target.sendMessage("§aYou have been healed by " + senderName + ".");
         }
-
+        
         if (target.getFoodLevel() < 20) {
             used = true;
             target.setFoodLevel(20);
@@ -577,7 +576,7 @@ public class CVRanks extends JavaPlugin implements Listener {
             target.setSaturation(5.0F);
             target.sendMessage("§aYour hunger has been refilled by " + senderName + ".");
         }
-
+        
         if(sender.hasPermission("cvranks.service.svc")) {
             if (target.getFireTicks() > 0) {
                 used = true;
@@ -590,7 +589,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                 target.sendMessage("§aYour air has been refilled by " + senderName + ".");
             }
         }
-
+        
         if(used) {
             sender.sendMessage(target.getDisplayName() + " has been healed.");
             lastHeals.put(sender.getUniqueId(), uptime);
@@ -603,13 +602,18 @@ public class CVRanks extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockPlace(BlockPlaceEvent event) {
         if(event.isCancelled()) return;
-
+        
         Material material = event.getBlockPlaced().getType();
         UUID playerId = event.getPlayer().getUniqueId();
         
         if(material == Material.COBBLESTONE) {
             if(stonemasonActive.contains(playerId))
                 event.getBlockPlaced().setType(Material.STONE);
+        }
+        else if(material == Material.DIRT) {
+            if (mushgardenerActive.contains(playerId) || mrMyceliumActive.contains(playerId)) {
+                event.getBlockPlaced().setType(Material.MYCELIUM);
+            }
         }
         else if(material == Material.CLAY) {
             if(bricklayerActive.contains(playerId))
@@ -622,11 +626,6 @@ public class CVRanks extends JavaPlugin implements Listener {
         else if(material == Material.SOUL_SAND) {
             if(carpenterActive.contains(playerId) || mrObsidianActive.contains(playerId))
                 event.getBlockPlaced().setType(Material.OBSIDIAN);
-        }
-        else if(material == Material.DIRT) {
-            if(mrMyceliumActive.contains(playerId)) {
-                event.getBlockPlaced().setType(Material.MYCELIUM);
-            }
         }
     }
 
@@ -760,7 +759,7 @@ public class CVRanks extends JavaPlugin implements Listener {
     public void onBlockDropItem(BlockDropItemEvent event) {
         
         if(event.isCancelled()) return;
-    
+        
         BlockState blockState = event.getBlockState();
         Material blockType = blockState.getType();
         
@@ -768,12 +767,11 @@ public class CVRanks extends JavaPlugin implements Listener {
         
         Player player = event.getPlayer();
         ItemStack tool = player.getInventory().getItemInMainHand();
-                
+        
         if (tool.containsEnchantment(Enchantment.SILK_TOUCH)) return;
         
         boolean smelt = smeltActive.contains(player.getUniqueId());
         World world = blockState.getWorld();
-        Location location = new Location(world, blockState.getX(), blockState.getY() + 0.5D, blockState.getZ());
         
         Iterator<Item> iter = event.getItems().iterator();
         while (iter.hasNext()) {
@@ -803,7 +801,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                 player.sendMessage("§aYou have found an extra " + newDropName + ".");
             }
             
-            world.dropItemNaturally(location, new ItemStack(newDropType, dropAmount));
+            world.dropItemNaturally(blockState.getLocation(), new ItemStack(newDropType, dropAmount));
             iter.remove();
         }
     }
@@ -860,7 +858,7 @@ public class CVRanks extends JavaPlugin implements Listener {
         Player killer = event.getEntity().getKiller();
         if (killer == null) return;
         if (killer.hasPermission("cvranks.leatherworker")) {
-
+            
             List<EntityType> leatherAnimals = new ArrayList<>();
             leatherAnimals.add(EntityType.COW);
             leatherAnimals.add(EntityType.MUSHROOM_COW);
@@ -868,7 +866,7 @@ public class CVRanks extends JavaPlugin implements Listener {
             leatherAnimals.add(EntityType.DONKEY);
             leatherAnimals.add(EntityType.MULE);
             leatherAnimals.add(EntityType.LLAMA);
-
+            
             if (leatherAnimals.contains(event.getEntity().getType())) {
                 ItemStack drop = new ItemStack(Material.LEATHER);
                 killer.getWorld().dropItemNaturally(event.getEntity().getLocation(), drop);
