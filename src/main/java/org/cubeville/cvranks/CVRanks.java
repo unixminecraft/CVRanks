@@ -18,6 +18,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -169,11 +170,12 @@ public class CVRanks extends JavaPlugin implements Listener {
         File dataFolder = getDataFolder();
         if(!dataFolder.exists()) dataFolder.mkdirs();
         
-        server.addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape(new String[] { "XXX", "XXX" }).setIngredient('X', Material.LEATHER));
+        server.addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape("XXX", "XXX").setIngredient('X', Material.LEATHER));
         
         repairCommand = new RepairCommand(this);
-        if(getConfig().getConfigurationSection("enchantments") != null) {
-            levelCommand = new LevelCommand(getConfig().getConfigurationSection("enchantments"), this);
+        ConfigurationSection enchantmentsConfig = getConfig().getConfigurationSection("enchantments");
+        if(enchantmentsConfig != null) {
+            levelCommand = new LevelCommand(enchantmentsConfig, this);
         }
     }
     
