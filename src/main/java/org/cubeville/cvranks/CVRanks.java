@@ -578,18 +578,15 @@ public class CVRanks extends JavaPlugin implements Listener {
             target.setSaturation(5.0F);
             target.sendMessage("§aYour hunger has been refilled by " + senderName + ".");
         }
-        
-        if(sender.hasPermission("cvranks.service.svc")) {
-            if (target.getFireTicks() > 0) {
-                used = true;
-                target.setFireTicks(0);
-                target.sendMessage("§aYou have been extinguished by " + senderName + ".");
-            }
-            if (target.getRemainingAir() < target.getMaximumAir()) {
-                used = true;
-                target.setRemainingAir(target.getMaximumAir());
-                target.sendMessage("§aYour air has been refilled by " + senderName + ".");
-            }
+        if (target.getFireTicks() > 0) {
+            used = true;
+            target.setFireTicks(0);
+            target.sendMessage("§aYou have been extinguished by " + senderName + ".");
+        }
+        if (target.getRemainingAir() < target.getMaximumAir()) {
+            used = true;
+            target.setRemainingAir(target.getMaximumAir());
+            target.sendMessage("§aYour air has been refilled by " + senderName + ".");
         }
         
         if(used) {
@@ -735,7 +732,7 @@ public class CVRanks extends JavaPlugin implements Listener {
                 }
             }
             else if(isLog(targetType) || isStrippedLog(targetType)) {
-                if(permPs || permPsExtraLogs) {
+                if(permPsExtraLogs) {
                     if(toolType == Material.STONE_AXE) chance = 4;
                     else if(toolType == Material.IRON_AXE) chance = 8;
                     else if(toolType == Material.DIAMOND_AXE) chance = 16;
