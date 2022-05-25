@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
@@ -18,6 +17,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
@@ -40,8 +41,11 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.jetbrains.annotations.NotNull;
 
-public class CVRanks extends JavaPlugin implements Listener {
+public final class CVRanks extends JavaPlugin implements Listener {
+    
+    public static final String DEFAULT_PERMISSION_MESSAGE = "§cYou do not have permission to execute this command.";
     
     private int uptime;
     
@@ -68,6 +72,7 @@ public class CVRanks extends JavaPlugin implements Listener {
     private LevelCommand levelCommand;
     private RepairCommand repairCommand;
     
+    @Override
     public void onEnable() {
         stonemasonActive = new HashSet<>();
         mushgardenerActive = new HashSet<>();
@@ -177,6 +182,38 @@ public class CVRanks extends JavaPlugin implements Listener {
         if(enchantmentsConfig != null) {
             levelCommand = new LevelCommand(enchantmentsConfig, this);
         }
+    }
+    
+    private void registerCommand(@NotNull final String commandName, @NotNull final TabExecutor tabExecutor) throws RuntimeException {
+        final PluginCommand command = this.getCommand(commandName);
+        if (command == null) {
+            throw new RuntimeException("Cannot find the command /" + commandName);
+        }
+        command.setExecutor(tabExecutor);
+        command.setTabCompleter(tabExecutor);
+    }
+    
+    @NotNull
+    public String formatWaitTime(final long waitTime) {
+        
+        final StringBuilder builder = new StringBuilder();
+        
+        long hours = waitTime / 1000L;
+        if (hours == 0L) {
+            builder.append("less than 1 hour");
+        } else {
+            long days = 0;
+            while (hours >= 24L) {
+                hours -= 24L;
+                days++;
+            }
+            if (days > 0) {
+                builder.append(days).append(" days, ");
+            }
+            builder.append(hours).append(" hours");
+        }
+        
+        return builder.toString();
     }
     
     public int getUptime() {

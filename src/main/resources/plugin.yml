@@ -1,72 +1,238 @@
-name: CVRanks
 main: org.cubeville.cvranks.CVRanks
-author: FrediW, RandomRob13, mciolkosz, Ptown16
+name: CVRanks
 version: 0.1
+description: "A plugin to add extra in-game perks and abilities to enhance the game"
 api-version: 1.18
+authors:
+  - FrediW
+  - RandomRob13
+  - mciolkosz
+  - Ptown16
 
+# WOO COMMANDS
 commands:
   
-  doc:
-    description: DR rank command
-
-  respawn:
-    description: DM respawn command
-    permission: cvranks.death.respawn
-
-  ns:
-    description: Nightstalker
-    permission: cvranks.mining.nightstalker
-
-  scuba:
-    description: Scuba
-    permission: cvranks.service.scuba
-
-  smelt:
-    description: Activate Instasmelt
-    permission: cvranks.mining.instasmelt
-
-  mason:
-    description: Activate stonemason
-    permission: cvranks.build.stonemason
-
-  mush:
-    description: Mush gardener
-    permission: cvranks.build.mushgardener
-
-  brick:
-    description: Brick layer
-    permission: cvranks.build.bricklayer
-
-  carp:
-    description: Master Carpenter command
-    permission: cvranks.build.carpenter
-
+  # Service Chain Commands
+  doctor:
+    description: "Heal self or another player"
+    usage: "§cSyntax: /doctor <list|me|[player]>"
+    aliases:
+      - doc
+      - dr
+  
   level:
-    description: Repairman Level command
+    description: "Level an enchantment up to and past the vanilla limits (restrictions apply)"
     permission: cvranks.service.repairman
-    aliases: lvl
-    
-  rp:
-    description: Repairman Repair command
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /level <cost|[enchantment]>"
+    aliases:
+      - lvl
+  
+  repair:
+    description: "Repair a tool, at the expense of raw materials and enchantment levels"
     permission: cvranks.service.repairman
-    aliases: repair
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /repair [cost|time]"
+    aliases: rp
+  
+  # Mining Chain Commands
+  instasmelt:
+    description: "Instantly smelt iron/gold/copper when mining with a non-silk pickaxe"
+    permission: cvranks.mining.instasmelt
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /instasmelt [on|off]"
+    aliases:
+      - smelt
+  
+  nightstalker:
+    description: "Permanent night vision"
+    permission: cvranks.mining.nightstalker
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /nightstalker [on|off]"
+    aliases:
+      - night
+      - ns
+  
+  # Build Chain Commands
+  stonemason:
+    description: "Instantly turn cobblestone into stone when placing it"
+    permission: cvranks.build.stonemason
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /stonemason [on|off]"
+    aliases:
+      - mason
+  
+  mushgardener:
+    description: "Instantly turn dirt to mycelium when placing it"
+    permission: cvranks.build.mushgardener
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /mushgardener [on|off]"
+    aliases:
+      - mush
+  
+  bricklayer:
+    description: "Instantly turn (soft) clay blocks into brick blocks when placing them"
+    permission: cvranks.build.bricklayer
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /bricklayer [on|off]"
+    aliases:
+      - brick
+  
+  carpenter:
+    description: "Instantly turn sand to glass and soul sand to obsidian when placing them"
+    permission: cvranks.build.carpenter
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /carpenter [on|off]"
+    aliases:
+      - mastercarpenter
+      - carp
+  
+  # Death Chain Commands
+  deathhound:
+    description: "Send the coordinates of self/another player's last death to self/the player, respectively"
+    usage: "§cSyntax: /deathhound <list|me|[player]>"
+    aliases:
+      - dh
+  
+  respawn:
+    description: "Teleports self back to the latest death point"
+    permission: cvranks.death.respawn
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /respawn"
+  
+  # Other Non-Chain Commands
+  scuba:
+    description: "Permanent underwater breathing"
+    permission: cvranks.service.scuba
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /scuba [on|off]"
+  
+  minirank:
+    description: "View and/or toggle minirank abilities (dirt -> mycelium / sand -> glass / soul sand -> obsidian)"
+    usage: "§cSyntax: /minirank [mycelium|glass|obsidian [on|off]]"
+    aliases:
+      - mr
 
-  mr:
-    description: Minirank command
-
-  dh:
-    description: Death Hound command
-    aliases: deathhound
-
+# WOO PERMISSIONS
 permissions:
+  
+  # Service Chain Permissions
   cvranks.service.dr:
-    description: Doctor rank
+    description: "Allows the player to use '/doctor me' or '/doctor <player>' commands once every 24 in-game hours"
     default: op
-
-  cvranks.death.respawn:
-    description: Respawn command
+  
+  cvranks.service.dr.master:
+    description: "Allows the player to use '/doctor me' or '/doctor <player>' commands once every 12 in-game hours"
     default: op
-
+  
+  cvranks.service.dr.hidefromlist:
+    description: "Allows the player to not appear on the list seen when '/doctor list' is run"
+    default: op
+  
+  cvranks.service.repairman:
+    description: "Allows the player to use the '/level' command and the '/repair' command every 48 in-game hours"
+    default: op
+  
+  cvranks.service.repairman.master:
+    description: "Allows the player to use the '/repair' command every 36 in-game hours"
+    default: op
+  
+  # Mining Chain Permissions
+  cvranks.mining.ps:
+    description: "Allows a chance at extra items to be dropped from coal, quartz, and diamond ore, as well as extra flint from gravel when mined with a non-silk tool"
+    default: op
+  
+  cvranks.mining.ps.ore:
+    description: "Allows a chance at extra items to be dropped from coal, quartz, and diamond ore when mined with a non-silk pickaxe"
+    default: op
+  
+  cvranks.mining.ps.flint:
+    description: "Allows a chance at (extra) flint to be dropped from gravel when mined with a non-silk shovel"
+    default: op
+  
+  cvranks.mining.instasmelt:
+    description: "Allows the player to use the '/instasmelt' command"
+    default: op
+  
+  cvranks.mining.nightstalker:
+    description: "Allows the player to use the '/nightstalker' command"
+    default: op
+  
+  cvranks.mining.mp:
+    description: "Allows a chance at diamonds to be dropped from coal ore when coal ore is mined with a non-silk pickaxe, as well as extra iron/gold/copper when mined"
+    default: op
+  
+  # Build Chain Permissions
+  cvranks.build.stonemason:
+    description: "Allows the player to use the '/stonemason' command"
+    default: op
+  
+  cvranks.build.mushgardener:
+    description: "Allows the player to use the '/mushgardener' command"
+    default: op
+  
+  cvranks.build.bricklayer:
+    description: "Allows the player to use the '/bricklayer' command"
+    default: op
+  
+  cvranks.build.carpenter:
+    description: "Allows the player to use the '/carpenter' command"
+    default: op
+  
+  # Death Chain Permissions
+  cvranks.death.te:
+    description: "Allows the player to keep their XP on death once every 24 in-game hours"
+    default: op
+  
+  cvranks.death.te.admin:
+    description: "Allows the player to always keep their XP on death, preferred for Administrators"
+    default: op
+  
+  cvranks.death.ks:
+    description: "Allows the player to keep their inventory on death once every 72 in-game hours"
+    default: op
+  
+  cvranks.death.ks.admin:
+    description: "Allows the player to always keep their inventory on death, preferred for Administrators"
+    default: op
+  
   cvranks.death.hound:
-    description: Use of the deathhound command
+    description: "Allows the player to use the '/deathhound me' or '/deathhound <player>' commands once every 24 in-game hours"
+    default: op
+  
+  cvranks.death.hound.hidefromlist:
+    description: "Allows the player to not appear on the list seen when '/deathhound list' is run"
+    default: op
+  
+  cvranks.death.respawn:
+    description: "Allows the player to use the '/respawn' command once every 72 in-game hours"
+    default: op
+  
+  # Other Non-Chain Permissions
+  cvranks.service.scuba:
+    description: "Allows the player to use the '/scuba' command"
+    default: op
+  
+  cvranks.mining.ps.logs:
+    description: "Allows a chance at extra logs to be dropped when mined with an axe"
+    default: op
+  
+  cvranks.ps.logs:
+    description: "Allows a chance at extra logs to be dropped when mined with an axe"
+    default: op
+  
+  cvranks.leatherworker:
+    description: "Allows an extra leather item to be dropped when a leather-producing mob is killed"
+    default: op
+  
+  cvranks.mr.mycelium:
+    description: "Allows the player to use the '/minirank mycelium' command"
+    default: op
+  
+  cvranks.mr.glass:
+    description: "Allows the player to use the '/minirank glass' command"
+    default: op
+  
+  cvranks.mr.obsidian:
+    description: "Allows the player to use the '/minirank obsidian' command"
     default: op
