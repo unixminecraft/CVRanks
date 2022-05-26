@@ -1,4 +1,4 @@
-package org.cubeville.cvranks;
+package org.cubeville.cvranks.bukkit;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
@@ -19,7 +20,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -41,40 +41,84 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.cubeville.cvranks.bukkit.command.build.BrickLayerCommand;
+import org.cubeville.cvranks.bukkit.command.build.MasterCarpenterCommand;
+import org.cubeville.cvranks.bukkit.command.build.MushGardenerCommand;
+import org.cubeville.cvranks.bukkit.command.build.StoneMasonCommand;
+import org.cubeville.cvranks.bukkit.command.death.DeathHoundCommand;
+import org.cubeville.cvranks.bukkit.command.death.RespawnCommand;
+import org.cubeville.cvranks.bukkit.command.mining.InstaSmeltCommand;
+import org.cubeville.cvranks.bukkit.command.mining.NightStalkerCommand;
+import org.cubeville.cvranks.bukkit.command.other.MiniRankCommand;
+import org.cubeville.cvranks.bukkit.command.other.ScubaCommand;
+import org.cubeville.cvranks.bukkit.command.service.DoctorCommand;
+import org.cubeville.cvranks.bukkit.command.service.LevelCommand;
+import org.cubeville.cvranks.bukkit.command.service.RepairCommand;
 import org.jetbrains.annotations.NotNull;
 
-public final class CVRanks extends JavaPlugin implements Listener {
+public final class CVRanksPlugin extends JavaPlugin implements Listener {
     
     public static final String DEFAULT_PERMISSION_MESSAGE = "§cYou do not have permission to execute this command.";
     
-    private int uptime;
+    /* GENERIC / NON-PERK RELATED */
+    private Map<UUID, Location> deathLocations;
+    private Set<UUID> pendingDeathHoundNotifications;
     
-    private Map<UUID, Integer> lastHeals;
-    private Map<UUID, Integer> lastRespawns;
-    private Map<UUID, Integer> lastDeathHound;
-    private Map<UUID, Integer> lastKeepsake;
-    private Map<UUID, Integer> lastKeepXP;
+    /* SERVICE CHAIN */
+    private Map<UUID, Long> doctorLastUsed;
+    // Repair replacement
     
-    private Map<UUID, Location> deathLocation;
-    private Set<UUID> pendingDeathHoundNotification;
+    /* MINING CHAIN */
+    private Set<UUID> instaSmeltActive;
+    private Set<UUID> nightStalkerActive;
     
-    private Set<UUID> stonemasonActive;
-    private Set<UUID> mushgardenerActive;
-    private Set<UUID> bricklayerActive;
-    private Set<UUID> carpenterActive;
-    private Set<UUID> mrGlassActive;
-    private Set<UUID> mrObsidianActive;
-    private Set<UUID> mrMyceliumActive;
+    /* BUILD CHAIN */
+    private Set<UUID> stoneMasonActive;
+    private Set<UUID> mushGardenerActive;
+    private Set<UUID> brickLayerActive;
+    private Set<UUID> masterCarpenterActive;
+    
+    /* DEATH CHAIN */
+    private Map<UUID, Long> xpertLastUsed;
+    private Map<UUID, Long> keepsakeLastUsed;
+    private Map<UUID, Long> deathHoundLastUsed;
+    private Map<UUID, Long> respawnLastUsed;
+    
+    /* NON-CHAIN / OTHER */
     private Set<UUID> scubaActive;
-    private Set<UUID> nightstalkerActive;
-    private Set<UUID> smeltActive;
+    private Set<UUID> miniRankMyceliumActive;
+    private Set<UUID> miniRankGlassActive;
+    private Set<UUID> miniRankObsidianActive;
     
-    private LevelCommand levelCommand;
-    private RepairCommand repairCommand;
+    /*
+     * Used for task scheduling and notifying when abilities can be used again.
+     */
+    private long uptime;
+    
+    
+    //private Map<UUID, Integer> lastHeals;
+    //private Map<UUID, Integer> lastRespawns;
+    //private Map<UUID, Integer> lastDeathHound;
+    //private Map<UUID, Integer> lastKeepsake;
+    //private Map<UUID, Integer> lastKeepXP;
+    
+    //private Map<UUID, Location> deathLocation;
+    //private Set<UUID> pendingDeathHoundNotification;
+    
+    //private Set<UUID> stonemasonActive;
+    //private Set<UUID> mushgardenerActive;
+    //private Set<UUID> bricklayerActive;
+    // Set<UUID> carpenterActive;
+    //private Set<UUID> mrGlassActive;
+    //private Set<UUID> mrObsidianActive;
+    //private Set<UUID> mrMyceliumActive;
+    //private Set<UUID> scubaActive;
+    //private Set<UUID> nightstalkerActive;
+    //private Set<UUID> smeltActive;
     
     @Override
     public void onEnable() {
-        stonemasonActive = new HashSet<>();
+        /*stonemasonActive = new HashSet<>();
         mushgardenerActive = new HashSet<>();
         bricklayerActive = new HashSet<>();
         carpenterActive = new HashSet<>();
@@ -92,9 +136,9 @@ public final class CVRanks extends JavaPlugin implements Listener {
         lastRespawns = new HashMap<>();
         lastDeathHound = new HashMap<>();
         lastKeepsake = new HashMap<>();
-        lastKeepXP = new HashMap<>();
+        lastKeepXP = new HashMap<>();*/
         
-        uptime = 0;
+        /*uptime = 0;*/
         
         final Server server = getServer();
         final BukkitScheduler scheduler = server.getScheduler();
@@ -177,11 +221,49 @@ public final class CVRanks extends JavaPlugin implements Listener {
         
         server.addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape("XXX", "XXX").setIngredient('X', Material.LEATHER));
         
-        repairCommand = new RepairCommand(this);
+        /*repairCommand = new RepairCommand(this);
         ConfigurationSection enchantmentsConfig = getConfig().getConfigurationSection("enchantments");
         if(enchantmentsConfig != null) {
             levelCommand = new LevelCommand(enchantmentsConfig, this);
-        }
+        }*/
+        
+        
+        
+        
+        
+        
+        ////////////////////////////
+        // GENERAL INITIALIZATION //
+        ////////////////////////////
+        
+        /*
+         * Where able, use ConcurrentHashMaps instead of HashMaps as neither the
+         * key nor value can be null.
+         */
+        
+        /* GENERIC / NON-PERK RELATED */
+        this.deathLocations = new ConcurrentHashMap<UUID, Location>();
+        this.pendingDeathHoundNotifications = new HashSet<UUID>();
+        
+        /* SERVICE CHAIN */
+        this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
+        // Repair replacement
+        
+        
+        
+        this.registerCommand("doctor", new DoctorCommand(this));
+        this.registerCommand("level", new LevelCommand(this));
+        this.registerCommand("repair", new RepairCommand(this));
+        this.registerCommand("instasmelt", new InstaSmeltCommand(this));
+        this.registerCommand("nightstalker", new NightStalkerCommand(this));
+        this.registerCommand("stonemason", new StoneMasonCommand(this));
+        this.registerCommand("mushgardener", new MushGardenerCommand(this));
+        this.registerCommand("bricklayer", new BrickLayerCommand(this));
+        this.registerCommand("mastercarpenter", new MasterCarpenterCommand(this));
+        this.registerCommand("deathhound", new DeathHoundCommand(this));
+        this.registerCommand("respawn", new RespawnCommand(this));
+        this.registerCommand("scuba", new ScubaCommand(this));
+        this.registerCommand("minirank", new MiniRankCommand(this));
     }
     
     private void registerCommand(@NotNull final String commandName, @NotNull final TabExecutor tabExecutor) throws RuntimeException {
@@ -201,24 +283,55 @@ public final class CVRanks extends JavaPlugin implements Listener {
         long hours = waitTime / 1000L;
         if (hours == 0L) {
             builder.append("less than 1 hour");
-        } else {
-            long days = 0;
-            while (hours >= 24L) {
-                hours -= 24L;
-                days++;
-            }
-            if (days > 0) {
-                builder.append(days).append(" days, ");
-            }
-            builder.append(hours).append(" hours");
+            return builder.toString();
         }
+        
+        final long days = hours / 24L;
+        hours = hours % 24L;
+        if (days > 0L) {
+            builder.append(days).append(" days, ");
+        }
+        builder.append(hours).append(" hours");
         
         return builder.toString();
     }
     
-    public int getUptime() {
-        return uptime;
+    @NotNull
+    public String formatRealTimeWait(final long waitTime) {
+        
+        final StringBuilder builder = new StringBuilder();
+        
+        long seconds = waitTime / 20L;
+        if (seconds == 0L) {
+            builder.append("a few seconds");
+            return builder.toString();
+        }
+        
+        long minutes = seconds / 60L;
+        seconds = seconds % 60L;
+        final long hours = minutes / 60L;
+        minutes = minutes % 60L;
+        
+        if (hours > 0L) {
+            builder.append(String.format("%02d", hours)).append("H");
+        }
+        if (minutes > 0L || seconds > 0L) {
+            builder.append(" ");
+        }
+        if (minutes > 0L) {
+            builder.append(String.format("%02d", minutes)).append("M ");
+        }
+        if (seconds > 0L) {
+            builder.append(" ");
+        }
+        builder.append(String.format("%02d", seconds)).append("S");
+        
+        return builder.toString();
     }
+    
+    /*public int getUptime() {
+        return uptime;
+    }*/
     
     public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
         
@@ -230,7 +343,7 @@ public final class CVRanks extends JavaPlugin implements Listener {
         Player sender = (Player) commandSender;
         UUID senderId = sender.getUniqueId();
         
-        if(command.getName().equals("level")) {
+        /*if(command.getName().equals("level")) {
             levelCommand.onLevelCommand(sender, args);
             return true;
         }
@@ -238,9 +351,9 @@ public final class CVRanks extends JavaPlugin implements Listener {
         else if(command.getName().equals("rp")) {
             repairCommand.onRepairCommand(sender, args);
             return true;
-        }
+        }*/
         
-        else if (command.getName().equals("mason") || command.getName().equals("mush") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt") || command.getName().equals("mr")) {
+        /*else*/ if (command.getName().equals("mason") || command.getName().equals("mush") || command.getName().equals("brick") || command.getName().equals("carp") || command.getName().equals("ns") || command.getName().equals("scuba") || command.getName().equals("smelt") || command.getName().equals("mr")) {
             
             Set<UUID> typeSet;
             String typeName;

@@ -1,4 +1,4 @@
-package org.cubeville.cvranks.command;
+package org.cubeville.cvranks.bukkit.command.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,14 +10,14 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
-import org.cubeville.cvranks.CVRanks;
+import org.cubeville.cvranks.bukkit.CVRanksPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public final class DoctorCommand implements TabExecutor {
     
-    private final CVRanks plugin;
+    private final CVRanksPlugin plugin;
     
-    public DoctorCommand(@NotNull final CVRanks plugin) {
+    public DoctorCommand(@NotNull final CVRanksPlugin plugin) {
         this.plugin = plugin;
     }
     
@@ -37,11 +37,13 @@ public final class DoctorCommand implements TabExecutor {
             sender.sendMessage("§8--------------------------------");
             sender.sendMessage("§bAvailable Doctor commands:");
             sender.sendMessage("§8--------------------------------");
-            sender.sendMessage(" §f-§r §a/doctor list");
+            sender.sendMessage(" §f-§r §a/doc list");
             if (sender.hasPermission("cvranks.service.dr")) {
-                sender.sendMessage(" §f-§r §a/doctor me");
-                sender.sendMessage(" §f-§r §a/doctor <player>");
+                sender.sendMessage(" §f-§r §a/doc me");
+                sender.sendMessage(" §f-§r §a/doc <player>");
             }
+            sender.sendMessage("§8--------------------------------");
+            
             return true;
         }
         
@@ -75,11 +77,25 @@ public final class DoctorCommand implements TabExecutor {
             for (final String message : messages) {
                 sender.sendMessage(message);
             }
+            sender.sendMessage("§8--------------------------------");
+            
             return true;
         }
         
         if (!sender.hasPermission("cvranks.service.dr")) {
-            sender.sendMessage(CVRanks.DEFAULT_PERMISSION_MESSAGE);
+            sender.sendMessage(CVRanksPlugin.DEFAULT_PERMISSION_MESSAGE);
+            return true;
+        }
+        
+        final UUID senderId = sender.getUniqueId();
+        final long waitTime = this.plugin.getDoctorWaitTime(senderId);
+        if (waitTime > 0L) {
+            
+            final StringBuilder builder = new StringBuilder();
+            builder.append("§cYou must wait§r §6").append(this.plugin.formatWaitTime(waitTime)).append("§r §cin-game");
+            builder.append("§r §b(").append(this.plugin.formatRealTimeWait(waitTime)).append(" in real-time)");
+            builder.append("§r §cto use your doctor ability.");
+            sender.sendMessage(builder.toString());
             return true;
         }
         
@@ -95,14 +111,9 @@ public final class DoctorCommand implements TabExecutor {
             }
         }
         
-        final UUID senderId = sender.getUniqueId();
-        final boolean self = senderId.equals(target.getUniqueId());
-        final long waitTime = this.plugin.getDoctorWaitTime(senderId);
-        if (waitTime > 0L) {
-            sender.sendMessage("§cYou must wait§r §6" + this.plugin.formatWaitTime(waitTime) + "§r §c(in-game) to use your doctor ability.");
-            return true;
-        }
-    
+        final UUID targetId = target.getUniqueId();
+        final boolean self = senderId.equals(targetId);
+        
         if (target.isDead()) {
             if (self) {
                 sender.sendMessage("§6Not sure how you managed to send that command, but you cannot bring yourself back but through the \"Respawn\" button.");
@@ -113,10 +124,18 @@ public final class DoctorCommand implements TabExecutor {
             return true;
         }
         
-        boolean used = false;
+        if (!this.needsHealing(target)) {
+            sender.sendMessage("§6" + (self ? "You§r §cdo" : target.getName() + "§r §cdoes") + " not need to be healed.");
+            return true;
+        }
+        
+        this.plugin.doctorUsed(senderId);
+        
         final String senderName;
         if (self) {
             senderName = "yourself";
+        } else if (!target.canSee(sender)) {
+            senderName = "someone mysterious";
         } else {
             senderName = sender.getName();
         }
@@ -125,7 +144,6 @@ public final class DoctorCommand implements TabExecutor {
         // #getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue(), but until
         // such a time, the deprecated method will be used
         if (target.getHealth() < target.getMaxHealth()) {
-            used = true;
             target.setHealth(target.getMaxHealth());
             target.sendMessage("§aYou have been healed by " + senderName + ".");
         }
@@ -135,7 +153,6 @@ public final class DoctorCommand implements TabExecutor {
         // - Saturation: MAX 5.0
         // - Exhaustion: MIN 0.0
         if (target.getFoodLevel() < 20) {
-            used = true;
             target.setFoodLevel(20);
             target.setSaturation(5.0F);
             target.setExhaustion(0.0F);
@@ -143,22 +160,34 @@ public final class DoctorCommand implements TabExecutor {
         }
         
         if (target.getFireTicks() > 0) {
-            used = true;
             target.setFireTicks(0);
             target.sendMessage("§aYou have been extinguished by " + senderName + ".");
         }
         
         if (target.getRemainingAir() < target.getMaximumAir()) {
-            used = true;
             target.setRemainingAir(target.getMaximumAir());
             target.sendMessage("§aYour air has been refilled by " + senderName + ".");
         }
         
-        if (used) {
-            this.plugin.doctorUsed(senderId);
-            sender.sendMessage("§aYou have healed§r §6" + (self ? "yourself" : target.getName()) + "§r §asuccessfully.");
-        } else {
-            sender.sendMessage("§6" + (self ? "You§r §cdo" : target.getName() + "§r §cdoes") + " not need to be healed.");
+        sender.sendMessage("§aYou have healed§r §6" + (self ? "yourself" : target.getName()) + "§r §asuccessfully.");
+        
+        for (final Player player : this.plugin.getServer().getOnlinePlayers()) {
+            
+            final UUID playerId = player.getUniqueId();
+            if (!player.hasPermission("cvranks.service.dr") || playerId.equals(senderId) || playerId.equals(targetId) || !player.canSee(target)) {
+                continue;
+            }
+            
+            final StringBuilder builder = new StringBuilder();
+            builder.append("§6").append(player.canSee(sender) ? "Someone mysterious" : sender.getName()).append("§r ");
+            builder.append("§ahas healed");
+            if (self) {
+                builder.append(" themselves.");
+            } else {
+                builder.append("§r §6").append(target.getName()).append("§r§a.");
+            }
+            
+            player.sendMessage(builder.toString());
         }
         
         return true;
@@ -173,19 +202,19 @@ public final class DoctorCommand implements TabExecutor {
         }
         
         final Player sender = (Player) commandSender;
-        final Iterator<String> argsIterator = (new ArrayList<String>(Arrays.asList(args))).iterator();
         final List<String> completions = new ArrayList<String>();
+        final Iterator<String> argsIterator = (new ArrayList<String>(Arrays.asList(args))).iterator();
         
         completions.add("list");
         if (!sender.hasPermission("cvranks.service.dr") || this.plugin.getDoctorWaitTime(sender.getUniqueId()) > 0L) {
             
             if (!argsIterator.hasNext()) {
-                return completions;
+                return Collections.unmodifiableList(completions);
             }
             
-            final String arg = argsIterator.next();
+            final String subCommand = argsIterator.next();
             if (!argsIterator.hasNext()) {
-                completions.removeIf(completion -> !completion.toLowerCase().startsWith(arg.toLowerCase()));
+                completions.removeIf(completion -> !completion.toLowerCase().startsWith(subCommand.toLowerCase()));
                 return Collections.unmodifiableList(completions);
             }
             
@@ -203,9 +232,9 @@ public final class DoctorCommand implements TabExecutor {
             return Collections.unmodifiableList(completions);
         }
         
-        final String arg = argsIterator.next();
+        final String subCommand = argsIterator.next();
         if (!argsIterator.hasNext()) {
-            completions.removeIf(completion -> !completion.toLowerCase().startsWith(arg.toLowerCase()));
+            completions.removeIf(completion -> !completion.toLowerCase().startsWith(subCommand.toLowerCase()));
             return Collections.unmodifiableList(completions);
         }
         

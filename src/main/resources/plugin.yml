@@ -15,7 +15,7 @@ commands:
   # Service Chain Commands
   doctor:
     description: "Heal self or another player"
-    usage: "§cSyntax: /doctor <list|me|[player]>"
+    usage: "§cSyntax: /doc <list|me|[player]>"
     aliases:
       - doc
       - dr
@@ -32,7 +32,7 @@ commands:
     description: "Repair a tool, at the expense of raw materials and enchantment levels"
     permission: cvranks.service.repairman
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /repair [cost|time]"
+    usage: "§cSyntax: /rp [cost|time]"
     aliases: rp
   
   # Mining Chain Commands
@@ -40,7 +40,7 @@ commands:
     description: "Instantly smelt iron/gold/copper when mining with a non-silk pickaxe"
     permission: cvranks.mining.instasmelt
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /instasmelt [on|off]"
+    usage: "§cSyntax: /smelt [on|off]"
     aliases:
       - smelt
   
@@ -48,7 +48,7 @@ commands:
     description: "Permanent night vision"
     permission: cvranks.mining.nightstalker
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /nightstalker [on|off]"
+    usage: "§cSyntax: /ns [on|off]"
     aliases:
       - night
       - ns
@@ -58,7 +58,7 @@ commands:
     description: "Instantly turn cobblestone into stone when placing it"
     permission: cvranks.build.stonemason
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /stonemason [on|off]"
+    usage: "§cSyntax: /mason [on|off]"
     aliases:
       - mason
   
@@ -66,7 +66,7 @@ commands:
     description: "Instantly turn dirt to mycelium when placing it"
     permission: cvranks.build.mushgardener
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /mushgardener [on|off]"
+    usage: "§cSyntax: /mush [on|off]"
     aliases:
       - mush
   
@@ -74,23 +74,24 @@ commands:
     description: "Instantly turn (soft) clay blocks into brick blocks when placing them"
     permission: cvranks.build.bricklayer
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /bricklayer [on|off]"
+    usage: "§cSyntax: /brick [on|off]"
     aliases:
       - brick
   
-  carpenter:
+  mastercarpenter:
     description: "Instantly turn sand to glass and soul sand to obsidian when placing them"
     permission: cvranks.build.carpenter
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /carpenter [on|off]"
+    usage: "§cSyntax: /carp [on|off]"
     aliases:
-      - mastercarpenter
+      - carpenter
       - carp
+      - mcarp
   
   # Death Chain Commands
   deathhound:
     description: "Send the coordinates of self/another player's last death to self/the player, respectively"
-    usage: "§cSyntax: /deathhound <list|me|[player]>"
+    usage: "§cSyntax: /dh <list|me|[player]>"
     aliases:
       - dh
   
@@ -109,7 +110,7 @@ commands:
   
   minirank:
     description: "View and/or toggle minirank abilities (dirt -> mycelium / sand -> glass / soul sand -> obsidian)"
-    usage: "§cSyntax: /minirank [mycelium|glass|obsidian [on|off]]"
+    usage: "§cSyntax: /mr [mycelium|glass|obsidian [on|off]]"
     aliases:
       - mr
 
