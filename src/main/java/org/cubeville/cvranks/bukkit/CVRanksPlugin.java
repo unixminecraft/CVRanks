@@ -1,6 +1,9 @@
 package org.cubeville.cvranks.bukkit;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
@@ -20,6 +25,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -60,6 +68,11 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     
     public static final String DEFAULT_PERMISSION_MESSAGE = "§cYou do not have permission to execute this command.";
     
+    private static final String RELOAD_ERROR_MESSAGE = "§cAn error has occurred while reloading the CVRanks configuration, please try again. If the error persists, please contact a server administrator.";
+    
+    private long uptime; // Used for notifying when abilities can be used again.
+    private BukkitScheduler scheduler;
+    
     /* GENERIC / NON-PERK RELATED */
     private Map<UUID, Location> deathLocations;
     private Set<UUID> pendingDeathHoundNotifications;
@@ -90,10 +103,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     private Set<UUID> miniRankGlassActive;
     private Set<UUID> miniRankObsidianActive;
     
-    /*
-     * Used for task scheduling and notifying when abilities can be used again.
-     */
-    private long uptime;
+    
     
     
     //private Map<UUID, Integer> lastHeals;
@@ -140,7 +150,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         
         /*uptime = 0;*/
         
-        final Server server = getServer();
+        /*final Server server = getServer();
         final BukkitScheduler scheduler = server.getScheduler();
         
         // Notify timer. Currently notifies for the following:
@@ -211,13 +221,13 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                     p.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
                 }
             }
-        }, 40L, 40L);
+        }, 40L, 40L);*/
         
         PluginManager pm = server.getPluginManager();
         pm.registerEvents(this, this);
         
-        File dataFolder = getDataFolder();
-        if(!dataFolder.exists()) dataFolder.mkdirs();
+        /*File dataFolder = getDataFolder();
+        if(!dataFolder.exists()) dataFolder.mkdirs();*/
         
         server.addRecipe(new ShapedRecipe(new ItemStack(Material.SADDLE)).shape("XXX", "XXX").setIngredient('X', Material.LEATHER));
         
@@ -236,6 +246,23 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         // GENERAL INITIALIZATION //
         ////////////////////////////
         
+        final File dataDirectory = this.getDataFolder();
+        try {
+            if (dataDirectory.exists()) {
+                if (!dataDirectory.isDirectory()) {
+                    throw new RuntimeException("Data directory is not a directory: " + dataDirectory.getPath());
+                }
+            } else if (!dataDirectory.mkdirs()) {
+                throw new RuntimeException("Data directory not created at " + dataDirectory.getPath());
+            }
+        } catch (SecurityException e) {
+            throw new RuntimeException("Unable to validate data directory at " + dataDirectory.getPath(), e);
+        }
+        
+        this.uptime = 0L;
+        final Server server = this.getServer();
+        final BukkitScheduler scheduler = server.getScheduler();
+        
         /*
          * Where able, use ConcurrentHashMaps instead of HashMaps as neither the
          * key nor value can be null.
@@ -249,7 +276,167 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
         // Repair replacement
         
+        /* MINING CHAIN */
+        this.instaSmeltActive = new HashSet<UUID>();
+        this.nightStalkerActive = new HashSet<UUID>();
         
+        /* BUILD CHAIN */
+        this.stoneMasonActive = new HashSet<UUID>();
+        this.mushGardenerActive = new HashSet<UUID>();
+        this.brickLayerActive = new HashSet<UUID>();
+        this.masterCarpenterActive = new HashSet<UUID>();
+        
+        /* DEATH CHAIN */
+        this.xpertLastUsed = new ConcurrentHashMap<UUID, Long>();
+        this.keepsakeLastUsed = new ConcurrentHashMap<UUID, Long>();
+        this.deathHoundLastUsed = new ConcurrentHashMap<UUID, Long>();
+        this.respawnLastUsed = new ConcurrentHashMap<UUID, Long>();
+        
+        /* NON-CHAIN / OTHER */
+        this.scubaActive = new HashSet<UUID>();
+        this.miniRankMyceliumActive = new HashSet<UUID>();
+        this.miniRankGlassActive = new HashSet<UUID>();
+        this.miniRankObsidianActive = new HashSet<UUID>();
+        
+        ///////////////////////////////
+        // RECURRING TASK SCHEDULING //
+        ///////////////////////////////
+        
+        /*
+         * UPTIME / NIGHTSTALKER / SCUBA TIMER
+         * 
+         * This runs every 40 ticks (2 seconds) after a 40 tick (2 second)
+         * delay and performs the following operations:
+         * - Adds 40 ticks to the uptime counter
+         * - Applies night vision to players with nightstalker enabled
+         * - Applies underwater breathing to players with scuba enabled
+         *     - These last 2 are scheduled due to conflicts with other plugins,
+         *       such as vanish plugins, removing effects when the player
+         *       changes states (ex: vanished -> visible).
+         */
+        scheduler.runTaskTimer(this, () -> {
+            
+            this.uptime += 40L;
+            
+            Iterator<UUID> iterator = this.nightStalkerActive.iterator();
+            while (iterator.hasNext()) {
+                
+                final Player player = server.getPlayer(iterator.next());
+                if (player == null || !player.isOnline() || player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
+                    continue;
+                }
+                
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
+            }
+        }, 40L, 40L);
+        
+        /*
+         * NOTIFICATION TIMER
+         * 
+         * This task waits 200 ticks (10 seconds), and then runs every 200 ticks
+         * (10 seconds) and notifies the following groups:
+         * - Doctor - Ability ready to use again
+         * - Death Hound - Ability ready to use again
+         * - Respawn - Ability ready to use again
+         * - Xpert - XP will be kept on next death
+         * - Keepsake - Inventory will be kept on next death
+         */
+        scheduler.runTaskTimer(this, () -> {
+            
+            // Doctor
+            Iterator<Map.Entry<UUID, Long>> iterator = this.doctorLastUsed.entrySet().iterator();
+            while (iterator.hasNext()) {
+                
+                final UUID playerId = iterator.next().getKey();
+                if (this.getDoctorWaitTime(playerId) > 0L) {
+                    continue;
+                }
+                
+                final Player player = server.getPlayer(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+                
+                player.sendMessage("§bYour doctor ability is ready to use again.");
+                iterator.remove();
+            }
+            
+            // Death Hound
+            iterator = this.deathHoundLastUsed.entrySet().iterator();
+            while (iterator.hasNext()) {
+                
+                final UUID playerId = iterator.next().getKey();
+                if (this.getDeathHoundWaitTime(playerId) > 0L) {
+                    continue;
+                }
+                
+                final Player player = server.getPlayer(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+                
+                player.sendMessage("§bYour death hound ability is ready to use again.");
+                iterator.remove();
+            }
+            
+            // Respawn
+            iterator = this.respawnLastUsed.entrySet().iterator();
+            while (iterator.hasNext()) {
+                
+                final UUID playerId = iterator.next().getKey();
+                if (this.getRespawnWaitTime(playerId) > 0L) {
+                    continue;
+                }
+                
+                final Player player = server.getPlayer(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+                
+                player.sendMessage("§bYour respawn ability is ready to use again.");
+                iterator.remove();
+            }
+            
+            // Xpert
+            iterator = this.xpertLastUsed.entrySet().iterator();
+            while (iterator.hasNext()) {
+                
+                final UUID playerId = iterator.next().getKey();
+                if (this.getXpertWaitTime(playerId) > 0L) {
+                    continue;
+                }
+                
+                final Player player = server.getPlayer(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+                
+                player.sendMessage("§bYou will keep your XP upon your next death.");
+                iterator.remove();
+            }
+            
+            // Keepsake
+            iterator = this.keepsakeLastUsed.entrySet().iterator();
+            while (iterator.hasNext()) {
+                
+                final UUID playerId = iterator.next().getKey();
+                if (this.getKeepsakeWaitTime(playerId) > 0L) {
+                    continue;
+                }
+                
+                final Player player = server.getPlayer(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+                
+                player.sendMessage("§bYou will keep your inventory upon your next death.");
+                iterator.remove();
+            }
+        }, 200L, 200L);
+        
+        //////////////////////////
+        // COMMAND REGISTRATION //
+        //////////////////////////
         
         this.registerCommand("doctor", new DoctorCommand(this));
         this.registerCommand("level", new LevelCommand(this));
@@ -264,6 +451,8 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         this.registerCommand("respawn", new RespawnCommand(this));
         this.registerCommand("scuba", new ScubaCommand(this));
         this.registerCommand("minirank", new MiniRankCommand(this));
+        
+        
     }
     
     private void registerCommand(@NotNull final String commandName, @NotNull final TabExecutor tabExecutor) throws RuntimeException {
@@ -328,6 +517,25 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         
         return builder.toString();
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     /*public int getUptime() {
         return uptime;
