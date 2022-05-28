@@ -316,17 +316,28 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
          */
         scheduler.runTaskTimer(this, () -> {
             
+            // Increment the uptime counter
             this.uptime += 40L;
             
-            Iterator<UUID> iterator = this.nightStalkerActive.iterator();
-            while (iterator.hasNext()) {
-                
-                final Player player = server.getPlayer(iterator.next());
+            // Reactivate anyone with nightstalker active but without the potion effect
+            for (final UUID playerId : this.nightStalkerActive) {
+                final Player player = server.getPlayer(playerId);
                 if (player == null || !player.isOnline() || player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
                     continue;
                 }
                 
                 player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
+            }
+            
+            // Reactivate anyone with scuba active but without the potion effect
+            
+            for (final UUID playerId : this.scubaActive) {
+                final Player player = server.getPlayer(playerId);
+                if (player == null || !player.isOnline() || player.hasPotionEffect(PotionEffectType.WATER_BREATHING)) {
+                    continue;
+                }
+                
+                player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1));
             }
         }, 40L, 40L);
         
@@ -451,6 +462,10 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         this.registerCommand("respawn", new RespawnCommand(this));
         this.registerCommand("scuba", new ScubaCommand(this));
         this.registerCommand("minirank", new MiniRankCommand(this));
+    
+        /////////////////////////////////
+        // EVENT LISTENER REGISTRATION //
+        /////////////////////////////////
         
         
     }
