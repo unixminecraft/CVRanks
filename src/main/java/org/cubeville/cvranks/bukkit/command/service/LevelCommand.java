@@ -1,9 +1,7 @@
 package org.cubeville.cvranks.bukkit.command.service;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,6 +61,21 @@ public final class LevelCommand implements TabExecutor {
             this.maxLevel = config.getInt("max-level");
             this.names = config.getStringList("names");
         }
+        
+        @Override
+        @NotNull
+        public String toString() {
+            
+            final Map<String, Object> data = new ConcurrentHashMap<String, Object>();
+            
+            data.put("enchantment", this.enchantment.getKey().toString());
+            data.put("base-cost", this.baseCost);
+            data.put("level-modifier", this.levelModifier);
+            data.put("max-level", this.maxLevel);
+            data.put("names", this.names.toString());
+            
+            return data.toString();
+        }
     }
     
     /////////////////////////
@@ -78,41 +91,9 @@ public final class LevelCommand implements TabExecutor {
         this.byEnchantment = new ConcurrentHashMap<Enchantment, ExtendedEnchantment>();
         this.byName = new ConcurrentHashMap<String, ExtendedEnchantment>();
         
-        final File configFile = new File(plugin.getDataFolder(), "config.yml");
-        try {
-            if (configFile.exists()) {
-                if (!configFile.isFile()) {
-                    throw new IllegalArgumentException("Config file is not a file: " + configFile.getPath());
-                }
-            } else {
-                if (!configFile.createNewFile()) {
-                    throw new IllegalArgumentException("Config file not created at " + configFile.getPath());
-                }
-                
-                final InputStream defaultConfig = plugin.getResource(configFile.getName());
-                final FileOutputStream outputStream = new FileOutputStream(configFile);
-                final byte[] buffer = new byte[4096];
-                int bytesRead;
-                
-                if (defaultConfig == null) {
-                    throw new IllegalArgumentException("No default config.yml packaged with CVRanks, possible compilation/build issue.");
-                }
-                
-                while ((bytesRead = defaultConfig.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-                
-                outputStream.flush();
-                outputStream.close();
-                defaultConfig.close();
-            }
-        } catch (IOException | SecurityException e) {
-            throw new IllegalArgumentException("Unable to load config file at " + configFile.getPath(), e);
-        }
-        
         final YamlConfiguration config = new YamlConfiguration();
         try {
-            config.load(configFile);
+            config.load(new File(plugin.getDataFolder(), "config.yml"));
         } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to load the main config.", e);
         }
@@ -125,7 +106,11 @@ public final class LevelCommand implements TabExecutor {
         logger.log(Level.INFO, "LOADING ENCHANTMENTS FOR LEVELING STARTING");
         for (final String enchantmentName : enchantmentsConfig.getKeys(false)) {
             
-            final Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentName));
+            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentName.toLowerCase()));
+            if (enchantment == null) {
+                // Backwards compatibility
+                enchantment = Enchantment.getByName(enchantmentName);
+            }
             if (enchantment == null) {
                 logger.log(Level.WARNING, "Unable to find enchantment with the name " + enchantmentName + ", skipping.");
                 continue;
@@ -146,14 +131,21 @@ public final class LevelCommand implements TabExecutor {
             }
             
             ExtendedEnchantment check = this.byEnchantment.put(enchantment, extendedEnchantment);
-            if (check != null) {
+            if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
                 logger.log(Level.WARNING, "Duplicate registered by enchantment for " + enchantmentName + ", overwriting with the new one.");
                 logger.log(Level.WARNING, "Already-registered: " + check.toString());
                 logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
             }
             
             check = this.byName.put(enchantment.getKey().getKey(), extendedEnchantment);
-            if (check != null) {
+            if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
+                logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
+                logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+            }
+            
+            check = this.byName.put(enchantment.getName(), extendedEnchantment);
+            if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
                 logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
                 logger.log(Level.WARNING, "Already-registered: " + check.toString());
                 logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
@@ -161,7 +153,7 @@ public final class LevelCommand implements TabExecutor {
             
             for (final String name : extendedEnchantment.names) {
                 check = this.byName.put(name, extendedEnchantment);
-                if (check != null) {
+                if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
                     logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
                     logger.log(Level.WARNING, "Already-registered: " + check.toString());
                     logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());

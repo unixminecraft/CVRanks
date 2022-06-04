@@ -36,7 +36,7 @@ public final class BrickLayerCommand implements TabExecutor {
         final UUID senderId = sender.getUniqueId();
         if (args.length == 0) {
             
-            final boolean enabled = this.plugin.isBricklayerEnabled(senderId);
+            final boolean enabled = this.plugin.isBrickLayerEnabled(senderId);
             sender.sendMessage("§bYour bricklayer ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
             sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/brick " + (enabled ? "off" : "on") + "§r§b.");
             return true;
@@ -45,7 +45,7 @@ public final class BrickLayerCommand implements TabExecutor {
         final String toggle = args[0];
         if (toggle.equalsIgnoreCase("on")) {
             
-            if (this.plugin.enableBricklayer(senderId)) {
+            if (this.plugin.enableBrickLayer(senderId)) {
                 sender.sendMessage("§aYour bricklayer ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour bricklayer ability is already on. To turn it off, use§r §a/brick off§r§c.");
@@ -54,7 +54,7 @@ public final class BrickLayerCommand implements TabExecutor {
             
         } else if (toggle.equalsIgnoreCase("off")) {
             
-            if (this.plugin.disableBricklayer(senderId)) {
+            if (this.plugin.disableBrickLayer(senderId)) {
                 sender.sendMessage("§aYour bricklayer ability has been turned off.");
             } else {
                 sender.sendMessage("§cYour bricklayer ability is already off. To turn it on, use§r §a/brick on§r§c.");
@@ -77,7 +77,7 @@ public final class BrickLayerCommand implements TabExecutor {
         final Player sender = (Player) commandSender;
         final List<String> completions = new ArrayList<String>();
         final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
-        completions.add(this.plugin.isBricklayerEnabled(sender.getUniqueId()) ? "off" : "on");
+        completions.add(this.plugin.isBrickLayerEnabled(sender.getUniqueId()) ? "off" : "on");
         
         if (!argsIterator.hasNext()) {
             return Collections.unmodifiableList(completions);

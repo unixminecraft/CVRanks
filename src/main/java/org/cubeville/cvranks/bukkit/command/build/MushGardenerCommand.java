@@ -36,7 +36,7 @@ public final class MushGardenerCommand implements TabExecutor {
         final UUID senderId = sender.getUniqueId();
         if (args.length == 0) {
             
-            final boolean enabled = this.plugin.isMushgardenerEnabled(senderId);
+            final boolean enabled = this.plugin.isMushGardenerEnabled(senderId);
             sender.sendMessage("§bYour mushgardener ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
             sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/mush " + (enabled ? "off" : "on") + "§r§b.");
             return true;
@@ -45,7 +45,7 @@ public final class MushGardenerCommand implements TabExecutor {
         final String toggle = args[0];
         if (toggle.equalsIgnoreCase("on")) {
             
-            if (this.plugin.enableMushgardener(senderId)) {
+            if (this.plugin.enableMushGardener(senderId)) {
                 sender.sendMessage("§aYour mushgardener ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour mushgardener ability is already on. To turn it off, use§r §a/mush off§r§c.");
@@ -54,7 +54,7 @@ public final class MushGardenerCommand implements TabExecutor {
             
         } else if (toggle.equalsIgnoreCase("off")) {
             
-            if (this.plugin.disableMushgardener(senderId)) {
+            if (this.plugin.disableMushGardener(senderId)) {
                 sender.sendMessage("§aYour mushgardener ability has been turned off.");
             } else {
                 sender.sendMessage("§cYour mushgardener ability is already off. To turn it on, use§r §a/mush on§r§c.");
@@ -77,7 +77,7 @@ public final class MushGardenerCommand implements TabExecutor {
         final Player sender = (Player) commandSender;
         final List<String> completions = new ArrayList<String>();
         final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
-        completions.add(this.plugin.isMushgardenerEnabled(sender.getUniqueId()) ? "off" : "on");
+        completions.add(this.plugin.isMushGardenerEnabled(sender.getUniqueId()) ? "off" : "on");
         
         if (!argsIterator.hasNext()) {
             return Collections.unmodifiableList(completions);

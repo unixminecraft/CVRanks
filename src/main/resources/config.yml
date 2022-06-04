@@ -221,7 +221,7 @@ enchantments:
     - "Riptide"
   CHANNELING:
     base-cost: 70
-    level-modifer: 140
+    level-modifier: 140
     max-level: 2
     names:
     - "Channeling"

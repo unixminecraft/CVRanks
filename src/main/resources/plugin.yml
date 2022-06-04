@@ -1,4 +1,4 @@
-main: org.cubeville.cvranks.CVRanks
+main: org.cubeville.cvranks.bukkit.CVRanksPlugin
 name: CVRanks
 version: 0.1
 description: "A plugin to add extra in-game perks and abilities to enhance the game"

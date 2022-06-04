@@ -10,6 +10,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.cubeville.cvranks.bukkit.CVRanksPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +38,7 @@ public final class NightStalkerCommand implements TabExecutor {
         final UUID senderId = sender.getUniqueId();
         if (args.length == 0) {
             
-            final boolean enabled = this.plugin.isNightstalkerEnabled(senderId);
+            final boolean enabled = this.plugin.isNightStalkerEnabled(senderId);
             sender.sendMessage("§bYour nightstalker ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
             sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/ns " + (enabled ? "off" : "on") + "§r§b.");
             return true;
@@ -45,7 +47,8 @@ public final class NightStalkerCommand implements TabExecutor {
         final String toggle = args[0];
         if (toggle.equalsIgnoreCase("on")) {
             
-            if (this.plugin.enableNightstalker(senderId)) {
+            if (this.plugin.enableNightStalker(senderId)) {
+                sender.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
                 sender.sendMessage("§aYour nightstalker ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour nightstalker ability is already on. To turn it off, use§r §a/ns off§r§c.");
@@ -54,7 +57,8 @@ public final class NightStalkerCommand implements TabExecutor {
             
         } else if (toggle.equalsIgnoreCase("off")) {
             
-            if (this.plugin.disableNightstalker(senderId)) {
+            if (this.plugin.disableNightStalker(senderId)) {
+                sender.removePotionEffect(PotionEffectType.NIGHT_VISION);
                 sender.sendMessage("§aYour nightstalker ability has been turned off.");
             } else {
                 sender.sendMessage("§cYour nightstalker ability is already off. To turn it on, use§r §a/ns on§r§c.");
@@ -77,7 +81,7 @@ public final class NightStalkerCommand implements TabExecutor {
         final Player sender = (Player) commandSender;
         final List<String> completions = new ArrayList<String>();
         final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
-        completions.add(this.plugin.isNightstalkerEnabled(sender.getUniqueId()) ? "off" : "on");
+        completions.add(this.plugin.isNightStalkerEnabled(sender.getUniqueId()) ? "off" : "on");
         
         if (!argsIterator.hasNext()) {
             return Collections.unmodifiableList(completions);

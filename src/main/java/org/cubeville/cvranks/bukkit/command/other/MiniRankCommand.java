@@ -46,15 +46,15 @@ public final class MiniRankCommand implements TabExecutor {
             sender.sendMessage("§bAvailable Miniranks commands:");
             sender.sendMessage("§8--------------------------------");
             if (permsMycelium) {
-                final boolean enabled = this.plugin.isMinirankMyceliumEnabled(senderId);
+                final boolean enabled = this.plugin.isMiniRankMyceliumEnabled(senderId);
                 sender.sendMessage(" §f-§r §a/mr mycelium [on|off]§r §f-§r §bCurrently§r " + (enabled ? "§aEnabled" : "§cDisabled"));
             }
             if (permsGlass) {
-                final boolean enabled = this.plugin.isMinirankGlassEnabled(senderId);
+                final boolean enabled = this.plugin.isMiniRankGlassEnabled(senderId);
                 sender.sendMessage(" §f-§r §a/mr glass [on|off]§r §f-§r §bCurrently§r " + (enabled ? "§aEnabled" : "§cDisabled"));
             }
             if (permsObsidian) {
-                final boolean enabled = this.plugin.isMinirankObsidianEnabled(senderId);
+                final boolean enabled = this.plugin.isMiniRankObsidianEnabled(senderId);
                 sender.sendMessage(" §f-§r §a/mr obsidian [on|off]§r §f-§r §bCurrently§r " + (enabled ? "§aEnabled" : "§cDisabled"));
             }
             sender.sendMessage("§8--------------------------------");
@@ -88,19 +88,19 @@ public final class MiniRankCommand implements TabExecutor {
         
         if (!argsIterator.hasNext()) {
             if (rank.equalsIgnoreCase("mycelium")) {
-                final boolean enabled = this.plugin.isMinirankMyceliumEnabled(senderId);
+                final boolean enabled = this.plugin.isMiniRankMyceliumEnabled(senderId);
                 sender.sendMessage("§bYour mycelium minirank ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
                 sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/mr mycelium " + (enabled ? "off" : "on") + "§r§b.");
                 return true;
                 
             } else if (rank.equalsIgnoreCase("glass")) {
-                final boolean enabled = this.plugin.isMinirankGlassEnabled(senderId);
+                final boolean enabled = this.plugin.isMiniRankGlassEnabled(senderId);
                 sender.sendMessage("§bYour glass minirank ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
                 sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/mr glass " + (enabled ? "off" : "on") + "§r§b.");
                 return true;
                 
             } else if (rank.equalsIgnoreCase("obsidian")) {
-                final boolean enabled = this.plugin.isMinirankObsidianEnabled(senderId);
+                final boolean enabled = this.plugin.isMiniRankObsidianEnabled(senderId);
                 sender.sendMessage("§bYour obsidian minirank ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
                 sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/mr obsidian " + (enabled ? "off" : "on") + "§r§b.");
                 return true;
@@ -119,11 +119,11 @@ public final class MiniRankCommand implements TabExecutor {
             
             final boolean enabled;
             if (rank.equalsIgnoreCase("mycelium")){
-                enabled = this.plugin.enableMinirankMycelium(senderId);
+                enabled = this.plugin.enableMiniRankMycelium(senderId);
             } else if (rank.equalsIgnoreCase("glass")) {
-                enabled = this.plugin.enableMinirankGlass(senderId);
+                enabled = this.plugin.enableMiniRankGlass(senderId);
             } else if (rank.equalsIgnoreCase("obsidian")) {
-                enabled = this.plugin.enableMinirankObsidian(senderId);
+                enabled = this.plugin.enableMiniRankObsidian(senderId);
             } else {
                 return false;
             }
@@ -139,11 +139,11 @@ public final class MiniRankCommand implements TabExecutor {
             
             final boolean disabled;
             if (rank.equalsIgnoreCase("mycelium")){
-                disabled = this.plugin.disableMinirankMycelium(senderId);
+                disabled = this.plugin.disableMiniRankMycelium(senderId);
             } else if (rank.equalsIgnoreCase("glass")) {
-                disabled = this.plugin.disableMinirankGlass(senderId);
+                disabled = this.plugin.disableMiniRankGlass(senderId);
             } else if (rank.equalsIgnoreCase("obsidian")) {
-                disabled = this.plugin.disableMinirankObsidian(senderId);
+                disabled = this.plugin.disableMiniRankObsidian(senderId);
             } else {
                 return false;
             }
@@ -205,7 +205,7 @@ public final class MiniRankCommand implements TabExecutor {
                 return Collections.emptyList();
             }
             
-            completions.add(this.plugin.isMinirankMyceliumEnabled(senderId) ? "off" : "on");
+            completions.add(this.plugin.isMiniRankMyceliumEnabled(senderId) ? "off" : "on");
             if (!argsIterator.hasNext()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(toggle.toLowerCase()));
                 return Collections.unmodifiableList(completions);
@@ -219,7 +219,7 @@ public final class MiniRankCommand implements TabExecutor {
                 return Collections.emptyList();
             }
             
-            completions.add(this.plugin.isMinirankGlassEnabled(senderId) ? "off" : "on");
+            completions.add(this.plugin.isMiniRankGlassEnabled(senderId) ? "off" : "on");
             if (!argsIterator.hasNext()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(toggle.toLowerCase()));
                 return Collections.unmodifiableList(completions);
@@ -233,7 +233,7 @@ public final class MiniRankCommand implements TabExecutor {
                 return Collections.emptyList();
             }
             
-            completions.add(this.plugin.isMinirankObsidianEnabled(senderId) ? "off" : "on");
+            completions.add(this.plugin.isMiniRankObsidianEnabled(senderId) ? "off" : "on");
             if (!argsIterator.hasNext()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(toggle.toLowerCase()));
                 return Collections.unmodifiableList(completions);

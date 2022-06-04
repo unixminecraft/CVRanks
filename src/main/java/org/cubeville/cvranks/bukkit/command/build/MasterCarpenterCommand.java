@@ -36,7 +36,7 @@ public final class MasterCarpenterCommand implements TabExecutor {
         final UUID senderId = sender.getUniqueId();
         if (args.length == 0) {
             
-            final boolean enabled = this.plugin.isCarpenterEnabled(senderId);
+            final boolean enabled = this.plugin.isMasterCarpenterEnabled(senderId);
             sender.sendMessage("§bYour master carpenter ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
             sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/carp " + (enabled ? "off" : "on") + "§r§b.");
             return true;
@@ -45,7 +45,7 @@ public final class MasterCarpenterCommand implements TabExecutor {
         final String toggle = args[0];
         if (toggle.equalsIgnoreCase("on")) {
             
-            if (this.plugin.enableCarpenter(senderId)) {
+            if (this.plugin.enableMasterCarpenter(senderId)) {
                 sender.sendMessage("§aYour master carpenter ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour master carpenter ability is already on. To turn it off, use§r §a/carp off§r§c.");
@@ -54,7 +54,7 @@ public final class MasterCarpenterCommand implements TabExecutor {
             
         } else if (toggle.equalsIgnoreCase("off")) {
             
-            if (this.plugin.disableCarpenter(senderId)) {
+            if (this.plugin.disableMasterCarpenter(senderId)) {
                 sender.sendMessage("§aYour master carpenter ability has been turned off.");
             } else {
                 sender.sendMessage("§cYour master carpenter ability is already off. To turn it on, use§r §a/carp on§r§c.");
@@ -77,7 +77,7 @@ public final class MasterCarpenterCommand implements TabExecutor {
         final Player sender = (Player) commandSender;
         final List<String> completions = new ArrayList<String>();
         final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
-        completions.add(this.plugin.isCarpenterEnabled(sender.getUniqueId()) ? "off" : "on");
+        completions.add(this.plugin.isMasterCarpenterEnabled(sender.getUniqueId()) ? "off" : "on");
         
         if (!argsIterator.hasNext()) {
             return Collections.unmodifiableList(completions);

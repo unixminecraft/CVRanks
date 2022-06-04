@@ -10,6 +10,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.cubeville.cvranks.bukkit.CVRanksPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +48,7 @@ public final class ScubaCommand implements TabExecutor {
         if (toggle.equalsIgnoreCase("on")) {
             
             if (this.plugin.enableScuba(senderId)) {
+                sender.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1));
                 sender.sendMessage("§aYour scuba ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour scuba ability is already on. To turn it off, use§r §a/scuba off§r§c.");
@@ -55,6 +58,7 @@ public final class ScubaCommand implements TabExecutor {
         } else if (toggle.equalsIgnoreCase("off")) {
             
             if (this.plugin.disableScuba(senderId)) {
+                sender.removePotionEffect(PotionEffectType.WATER_BREATHING);
                 sender.sendMessage("§aYour scuba ability has been turned off.");
             } else {
                 sender.sendMessage("§cYour scuba ability is already off. To turn it on, use§r §a/scuba on§r§c.");

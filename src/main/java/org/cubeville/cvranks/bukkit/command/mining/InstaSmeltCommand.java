@@ -36,7 +36,7 @@ public final class InstaSmeltCommand implements TabExecutor {
         final UUID senderId = sender.getUniqueId();
         if (args.length == 0) {
             
-            final boolean enabled = this.plugin.isInstasmeltEnabled(senderId);
+            final boolean enabled = this.plugin.isInstaSmeltEnabled(senderId);
             sender.sendMessage("§bYour instasmelt ability is currently§r " + (enabled ? "§aenabled" : "§cnot enabled") + "§r§b.");
             sender.sendMessage("§bYou can turn it§r " + (enabled ? "§coff" : "§aon") + "§r §bwith§r §a/smelt " + (enabled ? "off" : "on") + "§r§b.");
             return true;
@@ -45,7 +45,7 @@ public final class InstaSmeltCommand implements TabExecutor {
         final String toggle = args[0];
         if (toggle.equalsIgnoreCase("on")) {
             
-            if (this.plugin.enableInstasmelt(senderId)) {
+            if (this.plugin.enableInstaSmelt(senderId)) {
                 sender.sendMessage("§aYour instasmelt ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour instasmelt ability is already on. To turn it off, use§r §a/smelt off§r§c.");
@@ -54,7 +54,7 @@ public final class InstaSmeltCommand implements TabExecutor {
             
         } else if (toggle.equalsIgnoreCase("off")) {
             
-            if (this.plugin.disableInstasmelt(senderId)) {
+            if (this.plugin.disableInstaSmelt(senderId)) {
                 sender.sendMessage("§aYour instasmelt ability has been turned off.");
             } else {
                 sender.sendMessage("§cYour instasmelt ability is already off. To turn it on, use§r §a/smelt on§r§c.");
@@ -77,7 +77,7 @@ public final class InstaSmeltCommand implements TabExecutor {
         final Player sender = (Player) commandSender;
         final List<String> completions = new ArrayList<String>();
         final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
-        completions.add(this.plugin.isInstasmeltEnabled(sender.getUniqueId()) ? "off" : "on");
+        completions.add(this.plugin.isInstaSmeltEnabled(sender.getUniqueId()) ? "off" : "on");
         
         if (!argsIterator.hasNext()) {
             return Collections.unmodifiableList(completions);
