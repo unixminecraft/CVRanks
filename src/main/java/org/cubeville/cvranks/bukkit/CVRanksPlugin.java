@@ -48,6 +48,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     public static final String DEFAULT_PERMISSION_MESSAGE = "§cYou do not have permission to execute this command.";
     
     private static final String ABILITY_READY_DOCTOR = "§bYour doctor ability is ready to use again.";
+    private static final String ABILITY_READY_REPAIR = "§bYour repair ability is ready to use again.";
     private static final String ABILITY_READY_XPERT = "§bYou will keep your XP upon your next death.";
     private static final String ABILITY_READY_KEEPSAKE = "§bYou will keep your inventory upon your next death.";
     private static final String ABILITY_READY_DEATH_HOUND = "§bYour death hound ability is ready to use again.";
@@ -63,6 +64,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     
     /* PERK RESET NOTIFICATIONS */
     private Set<UUID> notifyDoctorReset;
+    private Set<UUID> notifyRepairReset;
     private Set<UUID> notifyXpertReset;
     private Set<UUID> notifyKeepsakeReset;
     private Set<UUID> notifyDeathHoundReset;
@@ -70,7 +72,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     
     /* SERVICE CHAIN */
     private Map<UUID, Long> doctorLastUsed;
-    // Repair replacement
+    private Map<UUID, Long> repairLastUsed;
     
     /* MINING CHAIN */
     private Set<UUID> instaSmeltActive;
@@ -161,6 +163,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         
         /* PERK RESET NOTIFICATIONS */
         this.notifyDoctorReset = new HashSet<UUID>();
+        this.notifyRepairReset = new HashSet<UUID>();
         this.notifyXpertReset = new HashSet<UUID>();
         this.notifyKeepsakeReset = new HashSet<UUID>();
         this.notifyDeathHoundReset = new HashSet<UUID>();
@@ -168,7 +171,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         
         /* SERVICE CHAIN */
         this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
-        // Repair replacement
+        this.repairLastUsed = new ConcurrentHashMap<UUID, Long>();
         
         /* MINING CHAIN */
         this.instaSmeltActive = new HashSet<UUID>();
@@ -215,7 +218,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
             
             // Reactivate anyone with nightstalker active but without the potion effect
             for (final UUID playerId : this.nightStalkerActive) {
-                final Player player = server.getPlayer(playerId);
+                final Player player = this.server.getPlayer(playerId);
                 if (player == null || !player.isOnline() || player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
                     continue;
                 }
@@ -225,7 +228,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
             
             // Reactivate anyone with scuba active but without the potion effect
             for (final UUID playerId : this.scubaActive) {
-                final Player player = server.getPlayer(playerId);
+                final Player player = this.server.getPlayer(playerId);
                 if (player == null || !player.isOnline() || player.hasPotionEffect(PotionEffectType.WATER_BREATHING)) {
                     continue;
                 }
@@ -258,11 +261,30 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                 
                 iterator.remove();
                 
-                final Player player = server.getPlayer(playerId);
+                final Player player = this.server.getPlayer(playerId);
                 if (player != null && player.isOnline()) {
                     player.sendMessage(CVRanksPlugin.ABILITY_READY_DOCTOR);
                 } else {
                     this.notifyDoctorReset.add(playerId);
+                }
+            }
+            
+            // Repair
+            iterator = this.repairLastUsed.entrySet().iterator();
+            while (iterator.hasNext()) {
+                
+                final UUID playerId = iterator.next().getKey();
+                if (this.getRepairWaitTime(playerId) > 0L) {
+                    continue;
+                }
+                
+                iterator.remove();
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_REPAIR);
+                } else {
+                    this.notifyRepairReset.add(playerId);
                 }
             }
             
@@ -277,7 +299,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                 
                 iterator.remove();
                 
-                final Player player = server.getPlayer(playerId);
+                final Player player = this.server.getPlayer(playerId);
                 if (player != null && player.isOnline()) {
                     player.sendMessage(CVRanksPlugin.ABILITY_READY_XPERT);
                 } else {
@@ -296,7 +318,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                 
                 iterator.remove();
                 
-                final Player player = server.getPlayer(playerId);
+                final Player player = this.server.getPlayer(playerId);
                 if (player != null && player.isOnline()) {
                     player.sendMessage(CVRanksPlugin.ABILITY_READY_KEEPSAKE);
                 } else {
@@ -315,7 +337,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                 
                 iterator.remove();
                 
-                final Player player = server.getPlayer(playerId);
+                final Player player = this.server.getPlayer(playerId);
                 if (player != null && player.isOnline()) {
                     player.sendMessage(CVRanksPlugin.ABILITY_READY_DEATH_HOUND);
                 } else {
@@ -334,7 +356,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                 
                 iterator.remove();
                 
-                final Player player = server.getPlayer(playerId);
+                final Player player = this.server.getPlayer(playerId);
                 if (player != null && player.isOnline()) {
                     player.sendMessage(CVRanksPlugin.ABILITY_READY_RESPAWN);
                 } else {
@@ -397,9 +419,9 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         final long days = hours / 24L;
         hours = hours % 24L;
         if (days > 0L) {
-            builder.append(days).append(" days, ");
+            builder.append(days).append(days == 1L ? "day, " : " days, ");
         }
-        builder.append(hours).append(" hours");
+        builder.append(hours).append(hours == 1L ? "hour" : " hours");
         
         return builder.toString();
     }
@@ -509,6 +531,19 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
             }, 60L);
         }
         
+        // Repair
+        if (this.notifyRepairReset.remove(playerId)) {
+            this.scheduler.runTaskLater(this, () -> {
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_REPAIR);
+                } else {
+                    this.notifyRepairReset.add(playerId);
+                }
+            }, 60L);
+        }
+        
         // Xpert
         if (this.notifyXpertReset.remove(playerId)) {
             this.scheduler.runTaskLater(this, () -> {
@@ -573,7 +608,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         }
         
         final Player player = this.server.getPlayer(playerId);
-        final long waitTime ;
+        final long waitTime;
         if (player != null && player.hasPermission("cvranks.service.dr.master")) {
             waitTime = 12000L;
         } else {
@@ -586,6 +621,28 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     
     public void doctorUsed(@NotNull final UUID playerId) {
         this.doctorLastUsed.put(playerId, this.uptime);
+    }
+    
+    public long getRepairWaitTime(@NotNull final UUID playerId) {
+        
+        if (!this.repairLastUsed.containsKey(playerId)) {
+            return 0L;
+        }
+        
+        final Player player = this.server.getPlayer(playerId);
+        final long waitTime;
+        if (player != null && player.hasPermission("cvranks.service.repairman.master")) {
+            waitTime = 36000L;
+        } else {
+            waitTime = 48000L;
+        }
+        
+        final long endTime = this.repairLastUsed.get(playerId) + waitTime;
+        return Math.max(0L, endTime - this.uptime);
+    }
+    
+    public void repairUsed(@NotNull final UUID playerId) {
+        this.repairLastUsed.put(playerId, this.uptime);
     }
     
     //////////////////

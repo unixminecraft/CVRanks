@@ -23,7 +23,6 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.cubeville.cvranks.bukkit.CVRanksPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +51,7 @@ public final class CVRanksEventListener implements Listener {
         final Material blockType = block.getType();
         final World world = block.getWorld();
         final Location location = block.getLocation();
-    
+        
         switch (blockType) {
             case OAK_LOG:
             case BIRCH_LOG:
@@ -289,12 +288,11 @@ public final class CVRanksEventListener implements Listener {
             event.setKeepInventory(true);
             event.getDrops().clear();
             
-            final Inventory inventory = player.getInventory();
-            for (int index = 0; index < inventory.getSize(); index++) {
-                
-                final ItemStack item = inventory.getItem(index);
+            final Iterator<ItemStack> iterator = player.getInventory().iterator();
+            while (iterator.hasNext()) {
+                final ItemStack item = iterator.next();
                 if (item != null && item.getEnchantmentLevel(Enchantment.VANISHING_CURSE) > 0) {
-                    inventory.clear(index);
+                    iterator.remove();
                 }
             }
             

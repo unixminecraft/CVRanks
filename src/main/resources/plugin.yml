@@ -32,7 +32,7 @@ commands:
     description: "Repair a tool, at the expense of raw materials and enchantment levels"
     permission: cvranks.service.repairman
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /rp [cost|time]"
+    usage: "§cSyntax: /rp"
     aliases: rp
   
   # Mining Chain Commands
