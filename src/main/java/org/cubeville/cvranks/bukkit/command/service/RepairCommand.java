@@ -41,7 +41,7 @@ public final class RepairCommand implements TabExecutor {
             final StringBuilder builder = new StringBuilder();
             builder.append("§cYOu must wait§r §6").append(this.plugin.formatWaitTime(waitTime)).append("§r §cin-game");
             builder.append("§r §b(").append(this.plugin.formatRealTimeWait(waitTime)).append(" in real time)");
-            builder.append("§r §cto use your respawn ability.");
+            builder.append("§r §cto use your repair ability.");
             sender.sendMessage(builder.toString());
             return true;
         }
