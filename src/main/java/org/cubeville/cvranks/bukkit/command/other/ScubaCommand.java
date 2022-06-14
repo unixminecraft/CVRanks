@@ -48,7 +48,7 @@ public final class ScubaCommand implements TabExecutor {
         if (toggle.equalsIgnoreCase("on")) {
             
             if (this.plugin.enableScuba(senderId)) {
-                sender.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1));
+                sender.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1, false, false));
                 sender.sendMessage("§aYour scuba ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour scuba ability is already on. To turn it off, use§r §a/scuba off§r§c.");

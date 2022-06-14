@@ -223,7 +223,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                     continue;
                 }
                 
-                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false));
             }
             
             // Reactivate anyone with scuba active but without the potion effect
@@ -233,7 +233,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                     continue;
                 }
                 
-                player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, Integer.MAX_VALUE, 1, false, false));
             }
         }, 40L, 40L);
         

@@ -48,7 +48,7 @@ public final class NightStalkerCommand implements TabExecutor {
         if (toggle.equalsIgnoreCase("on")) {
             
             if (this.plugin.enableNightStalker(senderId)) {
-                sender.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1));
+                sender.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false));
                 sender.sendMessage("§aYour nightstalker ability has been turned on.");
             } else {
                 sender.sendMessage("§cYour nightstalker ability is already on. To turn it off, use§r §a/ns off§r§c.");
