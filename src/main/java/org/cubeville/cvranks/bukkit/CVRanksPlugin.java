@@ -419,9 +419,9 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         final long days = hours / 24L;
         hours = hours % 24L;
         if (days > 0L) {
-            builder.append(days).append(days == 1L ? "day, " : " days, ");
+            builder.append(days).append(days == 1L ? " day, " : " days, ");
         }
-        builder.append(hours).append(hours == 1L ? "hour" : " hours");
+        builder.append(hours).append(hours == 1L ? " hour" : " hours");
         
         return builder.toString();
     }
