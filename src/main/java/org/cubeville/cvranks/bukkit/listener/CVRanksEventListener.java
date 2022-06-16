@@ -96,11 +96,10 @@ public final class CVRanksEventListener implements Listener {
                 if ((player.hasPermission("cvranks.mining.ps") || player.hasPermission("cvranks.mining.ps.ore")) && this.random.nextInt(100) < this.getNormalChance(toolType, "PICKAXE")) {
                     world.dropItemNaturally(location, new ItemStack(Material.COAL));
                     player.sendMessage("§aYou found an extra piece of coal.");
-                    
-                    if (player.hasPermission("cvranks.mining.mp") && this.random.nextInt(100) < 2) {
-                        world.dropItemNaturally(location, new ItemStack(Material.DIAMOND));
-                        player.sendMessage("§aYou found a diamond.");
-                    }
+                }
+                if (player.hasPermission("cvranks.mining.mp") && this.random.nextInt(100) < 2) {
+                    world.dropItemNaturally(location, new ItemStack(Material.DIAMOND));
+                    player.sendMessage("§aYou found a diamond.");
                 }
                 break;
             case NETHER_QUARTZ_ORE:
