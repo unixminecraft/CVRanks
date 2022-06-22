@@ -130,6 +130,10 @@ permissions:
     description: "Allows the player to not appear on the list seen when '/doctor list' is run"
     default: op
   
+  cvranks.service.dr.notifyoptout:
+    description: "Allows the player to not be notified when someone uses their doctor ability"
+    default: op
+  
   cvranks.service.repairman:
     description: "Allows the player to use the '/level' command and the '/repair' command every 48 in-game hours"
     default: op
@@ -203,6 +207,10 @@ permissions:
   
   cvranks.death.hound.hidefromlist:
     description: "Allows the player to not appear on the list seen when '/deathhound list' is run"
+    default: op
+  
+  cvranks.death.hound.notifyoptout:
+    description: "Allows the player to not be notified when someone uses their death hound ability or when they use their respawn ability"
     default: op
   
   cvranks.death.respawn:

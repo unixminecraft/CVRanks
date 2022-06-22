@@ -174,12 +174,12 @@ public final class DoctorCommand implements TabExecutor {
         for (final Player player : this.plugin.getServer().getOnlinePlayers()) {
             
             final UUID playerId = player.getUniqueId();
-            if (!player.hasPermission("cvranks.service.dr") || playerId.equals(senderId) || playerId.equals(targetId) || !player.canSee(target)) {
+            if (!player.hasPermission("cvranks.service.dr") || player.hasPermission("cvranks.service.dr.notifyoptout") || playerId.equals(senderId) || playerId.equals(targetId) || !player.canSee(target)) {
                 continue;
             }
             
             final StringBuilder builder = new StringBuilder();
-            builder.append("§6").append(player.canSee(sender) ? "Someone mysterious" : sender.getName()).append("§r ");
+            builder.append("§6").append(player.canSee(sender) ? sender.getName() : "Someone mysterious").append("§r ");
             builder.append("§ahas healed");
             if (self) {
                 builder.append(" themselves.");

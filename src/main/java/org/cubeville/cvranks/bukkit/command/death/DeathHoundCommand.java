@@ -165,12 +165,12 @@ public final class DeathHoundCommand implements TabExecutor {
         for (final Player player : this.plugin.getServer().getOnlinePlayers()) {
             
             final UUID playerId = player.getUniqueId();
-            if (!player.hasPermission("cvranks.death.hound") || playerId.equals(senderId) || playerId.equals(targetId) || !player.canSee(target)) {
+            if (!player.hasPermission("cvranks.death.hound") || player.hasPermission("cvranks.death.hound.notifyoptout") || playerId.equals(senderId) || playerId.equals(targetId) || !player.canSee(target)) {
                 continue;
             }
             
             final StringBuilder builder = new StringBuilder();
-            builder.append("§6").append(player.canSee(sender) ? "Someone mysterious" : sender.getName()).append("§r ");
+            builder.append("§6").append(player.canSee(sender) ? sender.getName() : "Someone mysterious").append("§r ");
             builder.append("§ahas sent");
             if (self) {
                 builder.append(" themselves their own ");

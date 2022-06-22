@@ -63,7 +63,7 @@ public final class RespawnCommand implements TabExecutor {
         
         for (final Player player : this.plugin.getServer().getOnlinePlayers()) {
             
-            if (!player.hasPermission("cvranks.death.hound") || player.getUniqueId().equals(senderId) || !player.canSee(sender)) {
+            if (!player.hasPermission("cvranks.death.hound") || player.hasPermission("cvranks.death.hound.notifyoptout") || player.getUniqueId().equals(senderId) || !player.canSee(sender)) {
                 continue;
             }
             
