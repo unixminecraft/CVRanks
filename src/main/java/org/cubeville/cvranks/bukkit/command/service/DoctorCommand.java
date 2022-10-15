@@ -39,6 +39,7 @@ public final class DoctorCommand implements TabExecutor {
             sender.sendMessage("§8--------------------------------");
             sender.sendMessage(" §f-§r §a/doc list");
             if (sender.hasPermission("cvranks.service.dr")) {
+                sender.sendMessage(" §f-§r §a/doc time");
                 sender.sendMessage(" §f-§r §a/doc me");
                 sender.sendMessage(" §f-§r §a/doc <player>");
             }
@@ -96,6 +97,11 @@ public final class DoctorCommand implements TabExecutor {
             builder.append("§r §b(").append(this.plugin.formatRealTimeWait(waitTime)).append(" in real-time)");
             builder.append("§r §cto use your doctor ability.");
             sender.sendMessage(builder.toString());
+            return true;
+        }
+        
+        if (subCommand.equalsIgnoreCase("time")) {
+            sender.sendMessage(CVRanksPlugin.ABILITY_READY_DOCTOR);
             return true;
         }
         
@@ -221,6 +227,7 @@ public final class DoctorCommand implements TabExecutor {
             return Collections.emptyList();
         }
         
+        completions.add("time");
         completions.add("me");
         for (final Player player : this.plugin.getServer().getOnlinePlayers()) {
             if (sender.canSee(player) && this.needsHealing(player)) {

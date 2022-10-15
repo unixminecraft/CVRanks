@@ -31,7 +31,9 @@ import org.cubeville.cvranks.bukkit.command.build.MasterCarpenterCommand;
 import org.cubeville.cvranks.bukkit.command.build.MushGardenerCommand;
 import org.cubeville.cvranks.bukkit.command.build.StoneMasonCommand;
 import org.cubeville.cvranks.bukkit.command.death.DeathHoundCommand;
+import org.cubeville.cvranks.bukkit.command.death.KeepsakeCommand;
 import org.cubeville.cvranks.bukkit.command.death.RespawnCommand;
+import org.cubeville.cvranks.bukkit.command.death.XpertCommand;
 import org.cubeville.cvranks.bukkit.command.mining.InstaSmeltCommand;
 import org.cubeville.cvranks.bukkit.command.mining.NightStalkerCommand;
 import org.cubeville.cvranks.bukkit.command.other.MiniRankCommand;
@@ -47,12 +49,12 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     
     public static final String DEFAULT_PERMISSION_MESSAGE = "§cYou do not have permission to execute this command.";
     
-    private static final String ABILITY_READY_DOCTOR = "§bYour doctor ability is ready to use again.";
-    private static final String ABILITY_READY_REPAIR = "§bYour repair ability is ready to use again.";
-    private static final String ABILITY_READY_XPERT = "§bYou will keep your XP upon your next death.";
-    private static final String ABILITY_READY_KEEPSAKE = "§bYou will keep your inventory upon your next death.";
-    private static final String ABILITY_READY_DEATH_HOUND = "§bYour death hound ability is ready to use again.";
-    private static final String ABILITY_READY_RESPAWN = "§bYour respawn ability is ready to use again.";
+    public static final String ABILITY_READY_DOCTOR = "§bYour doctor ability is ready to use again.";
+    public static final String ABILITY_READY_REPAIR = "§bYour repair ability is ready to use again.";
+    public static final String ABILITY_READY_XPERT = "§bYou will keep your XP upon your next death.";
+    public static final String ABILITY_READY_KEEPSAKE = "§bYou will keep your inventory upon your next death.";
+    public static final String ABILITY_READY_DEATH_HOUND = "§bYour death hound ability is ready to use again.";
+    public static final String ABILITY_READY_RESPAWN = "§bYour respawn ability is ready to use again.";
     
     private long uptime; // Used for notifying when abilities can be used again.
     private Server server;
@@ -378,6 +380,8 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         this.registerCommand("mushgardener", new MushGardenerCommand(this));
         this.registerCommand("bricklayer", new BrickLayerCommand(this));
         this.registerCommand("mastercarpenter", new MasterCarpenterCommand(this));
+        this.registerCommand("xpert", new XpertCommand(this));
+        this.registerCommand("keepsake", new KeepsakeCommand(this));
         this.registerCommand("deathhound", new DeathHoundCommand(this));
         this.registerCommand("respawn", new RespawnCommand(this));
         this.registerCommand("scuba", new ScubaCommand(this));

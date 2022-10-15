@@ -89,6 +89,19 @@ commands:
       - mcarp
   
   # Death Chain Commands
+  xpert:
+    description: "Check the amount of time remaining until your Xpert ability is ready to use"
+    usage: "§cSyntax: /xpert time"
+    aliases:
+      - expert
+      - ex
+  
+  keepsake:
+    description: "Check the amount of time remaining until your Keepsake ability is ready to use"
+    usage: "§cSyntax: /ks time"
+    aliases:
+      - ks
+  
   deathhound:
     description: "Send the coordinates of self/another player's last death to self/the player, respectively"
     usage: "§cSyntax: /dh <list|me|[player]>"
@@ -99,7 +112,7 @@ commands:
     description: "Teleports self back to the latest death point"
     permission: cvranks.death.respawn
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /respawn"
+    usage: "§cSyntax: /respawn [time]"
   
   # Other Non-Chain Commands
   scuba:

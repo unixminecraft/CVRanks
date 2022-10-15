@@ -40,6 +40,7 @@ public final class DeathHoundCommand implements TabExecutor {
             sender.sendMessage("§8--------------------------------");
             sender.sendMessage(" §f-§r §a/dh list");
             if (sender.hasPermission("cvranks.death.hound")) {
+                sender.sendMessage(" §f-§r §a/dh time");
                 sender.sendMessage(" §f-§r §a/dh me");
                 sender.sendMessage(" §f-§r §a/dh <player>");
             }
@@ -90,6 +91,7 @@ public final class DeathHoundCommand implements TabExecutor {
         
         final UUID senderId = sender.getUniqueId();
         final long waitTime = this.plugin.getDeathHoundWaitTime(senderId);
+        
         if (waitTime > 0L) {
             
             final StringBuilder builder = new StringBuilder();
@@ -97,6 +99,11 @@ public final class DeathHoundCommand implements TabExecutor {
             builder.append("§r §b(").append(this.plugin.formatRealTimeWait(waitTime)).append(" in real-time)");
             builder.append("§r §cto use your death hound ability.");
             sender.sendMessage(builder.toString());
+            return true;
+        }
+        
+        if (subCommand.equalsIgnoreCase("time")) {
+            sender.sendMessage(CVRanksPlugin.ABILITY_READY_DEATH_HOUND);
             return true;
         }
         
@@ -213,6 +220,7 @@ public final class DeathHoundCommand implements TabExecutor {
             return Collections.emptyList();
         }
         
+        completions.add("time");
         completions.add("me");
         for (final UUID playerId : this.plugin.getDeathLocationIds()) {
             

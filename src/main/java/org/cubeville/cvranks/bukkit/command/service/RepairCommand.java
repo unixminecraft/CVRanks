@@ -29,7 +29,10 @@ public final class RepairCommand implements TabExecutor {
             commandSender.sendMessage("§cThe repair command can only be used by a player.");
             return true;
         }
-        if (args.length > 0) {
+        if (args.length > 1) {
+            return false;
+        }
+        if (args.length == 1 && !args[0].equalsIgnoreCase("time")) {
             return false;
         }
         
@@ -39,10 +42,15 @@ public final class RepairCommand implements TabExecutor {
         if (waitTime > 0L) {
             
             final StringBuilder builder = new StringBuilder();
-            builder.append("§cYOu must wait§r §6").append(this.plugin.formatWaitTime(waitTime)).append("§r §cin-game");
+            builder.append("§cYou must wait§r §6").append(this.plugin.formatWaitTime(waitTime)).append("§r §cin-game");
             builder.append("§r §b(").append(this.plugin.formatRealTimeWait(waitTime)).append(" in real time)");
             builder.append("§r §cto use your repair ability.");
             sender.sendMessage(builder.toString());
+            return true;
+        }
+        
+        if (args.length == 1) {
+            sender.sendMessage(CVRanksPlugin.ABILITY_READY_REPAIR);
             return true;
         }
         
@@ -81,6 +89,6 @@ public final class RepairCommand implements TabExecutor {
     @Override
     @NotNull
     public List<String> onTabComplete(@NotNull final CommandSender commandSender, @NotNull final Command command, @NotNull final String label, @NotNull final String[] args) {
-        return Collections.emptyList();
+        return commandSender instanceof Player ? List.of("time") : Collections.emptyList();
     }
 }
