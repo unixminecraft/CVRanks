@@ -104,7 +104,7 @@ commands:
   
   deathhound:
     description: "Send the coordinates of self/another player's last death to self/the player, respectively"
-    usage: "§cSyntax: /dh <list|me|[player]>"
+    usage: "§cSyntax: /dh <list|time|me|[player]>"
     aliases:
       - dh
   
@@ -132,11 +132,11 @@ permissions:
   
   # Service Chain Permissions
   cvranks.service.dr:
-    description: "Allows the player to use '/doctor me' or '/doctor <player>' commands once every 24 in-game hours"
+    description: "Allows the player to use the 'time', 'me', and '<player>' subcommands of the '/doctor' command"
     default: op
   
   cvranks.service.dr.master:
-    description: "Allows the player to use '/doctor me' or '/doctor <player>' commands once every 12 in-game hours"
+    description: "Shortens the wait time to use the doctor ability to 12 in-game hours (default is 24 in-game hours)"
     default: op
   
   cvranks.service.dr.hidefromlist:
@@ -148,11 +148,11 @@ permissions:
     default: op
   
   cvranks.service.repairman:
-    description: "Allows the player to use the '/level' command and the '/repair' command every 48 in-game hours"
+    description: "Allows the player to use the '/level' command and the '/repair' command"
     default: op
   
   cvranks.service.repairman.master:
-    description: "Allows the player to use the '/repair' command every 36 in-game hours"
+    description: "Shortens the wait time to use the repair ability to 36 in-game hours (default is 48 in-game hours)"
     default: op
   
   # Mining Chain Permissions
@@ -215,7 +215,7 @@ permissions:
     default: op
   
   cvranks.death.hound:
-    description: "Allows the player to use the '/deathhound me' or '/deathhound <player>' commands once every 24 in-game hours"
+    description: "Allows the player to use the 'time', 'me', and '<player>' subcommands of the '/deathhound' command ('me' and 'player' can only be run successfully every 24 in-game hours)"
     default: op
   
   cvranks.death.hound.hidefromlist:
@@ -227,7 +227,7 @@ permissions:
     default: op
   
   cvranks.death.respawn:
-    description: "Allows the player to use the '/respawn' command once every 72 in-game hours"
+    description: "Allows the player to use the '/respawn' command once every 72 in-game hours ('/respawn time' can be used without time restrictions)"
     default: op
   
   # Other Non-Chain Permissions
