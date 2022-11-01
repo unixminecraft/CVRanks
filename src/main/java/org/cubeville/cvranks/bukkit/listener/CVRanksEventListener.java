@@ -224,8 +224,18 @@ public final class CVRanksEventListener implements Listener {
             }
             
             if (addedDrop) {
+                
                 player.sendMessage(dropMessage);
-                drop.setAmount(drop.getAmount() + 1);
+                
+                if (blockType == Material.GRAVEL) {
+                    // Gotta specifically drop flint, can't just add 1, otherwise it may drop extra gravel
+                    final World world = blockState.getWorld();
+                    final Location location = blockState.getLocation();
+                    this.plugin.getServer().getScheduler().runTaskLater(this.plugin, () -> world.dropItemNaturally(location, new ItemStack(Material.FLINT)), 1L);
+                } else {
+                    // Just add 1 of the drop
+                    drop.setAmount(drop.getAmount() + 1);
+                }
             }
         }
         
@@ -313,10 +323,11 @@ public final class CVRanksEventListener implements Listener {
             if (addedDrop) {
                 player.sendMessage("§aYou found an extra " + newDropName + ".");
                 drop.setAmount(drop.getAmount() + 1);
-                if (dropType != newDropType) {
-                    drop.setType(newDropType);
-                    player.giveExp(drop.getAmount());
-                }
+            }
+            
+            if (dropType != newDropType) {
+                drop.setType(newDropType);
+                player.giveExp(drop.getAmount());
             }
         }
     }
