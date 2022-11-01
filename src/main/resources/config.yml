@@ -1,256 +1,256 @@
 enchantments:
-    DURABILITY:
-        base-cost: 21
-        level-modifier: 130
-        max-level: 5
-        names:
-        - "Unbreaking"
-        - "unb"
-    PROTECTION_ENVIRONMENTAL:
-        base-cost: 10
-        level-modifier: 175
-        max-level: 5
-        names:
-        - "Protection"
-        - "prot"
-    LOOT_BONUS_BLOCKS:
-        base-cost: 20
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Fortune"
-    PROTECTION_FIRE:
-        base-cost: 10
-        level-modifier: 160
-        max-level: 5
-        names:
-        - "Fire Protection"
-        - "fireprot"
-    DIG_SPEED:
-        base-cost: 5
-        level-modifier: 170
-        max-level: 5
-        names:
-        - "Efficiency"
-        - "eff"
-    PROTECTION_FALL:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 5
-        names:
-        - "Feather Falling"
-        - "featherfall"
-        - "feather"
-    SILK_TOUCH:
-        base-cost: 50
-        level-modifier: 120
-        max-level: 2
-        names:
-        - "Silk Touch"
-        - "silk"
-    FROST_WALKER:
-        base-cost: 15
-        level-modifier: 175
-        max-level: 3
-        names:
-        - "Frost Walker"
-        - "frost"
-        - "frostwalker"
-    PROTECTION_EXPLOSIONS:
-        base-cost: 10
-        level-modifier: 145
-        max-level: 5
-        names:
-        - "Blast Protection"
-        - "blastprot"
-        - "blast"
-    PROTECTION_PROJECTILE:
-        base-cost: 10
-        level-modifier: 160
-        max-level: 5
-        names:
-        - "Projectile Protection"
-        - "projprotection"
-        - "projectileprot"
-        - "projprot"
-    OXYGEN:
-        base-cost: 10
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Respiration"
-    WATER_WORKER:
-        base-cost: 35
-        level-modifier: 120
-        max-level: 2
-        names:
-        - "Aqua Affinity"
-        - "aa"
-    THORNS:
-        base-cost: 15
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Thorns"
-        - "thorn"
-    ARROW_INFINITE:
-        base-cost: 30
-        level-modifier: 133
-        max-level: 2
-        names:
-        - "Infinity"
-        - "infinite"
-    DAMAGE_UNDEAD:
-        base-cost: 5
-        level-modifier: 160
-        max-level: 6
-        names:
-        - "Smite"
-    ARROW_FIRE:
-        base-cost: 30
-        level-modifier: 133
-        max-level: 2
-        names:
-        - "Flame"
-    DAMAGE_ALL:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 6
-        names:
-        - "Sharpness"
-        - "sharp"
-    ARROW_KNOCKBACK:
-        base-cost: 24
-        level-modifier: 150
-        max-level: 3
-        names:
-        - "Punch"
-    KNOCKBACK:
-        base-cost: 24
-        level-modifier: 150
-        max-level: 3
-        names:
-        - "Knockback"
-        - "knock"
-    ARROW_DAMAGE:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 6
-        names:
-        - "Power"
-    DAMAGE_ARTHROPODS:
-        base-cost: 5
-        level-modifier: 160
-        max-level: 6
-        names:
-        - "Bane of Arthropods"
-        - "bane"
-        - "boa"
-    LOOT_BONUS_MOBS:
-        base-cost: 12
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Looting"
-        - "loot"
-    FIRE_ASPECT:
-        base-cost: 20
-        level-modifier: 200
-        max-level: 3
-        names:
-        - "Fire Aspect"
-        - "fire"
-    LUCK:
-        base-cost: 13
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Luck of the Sea"
-        - "lots"
-        - "luck"
-        - "luckofthesea"
-    LURE:
-        base-cost: 13
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Lure"
-    DEPTH_STRIDER:
-        base-cost: 13
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Depth Strider"
-        - "depth"
-        - "strider"
-    MENDING:
-        base-cost: 70
-        level-modifier: 140
-        max-level: 2
-        names:
-        - "Mending"
-        - "mend"
-    SWEEPING_EDGE:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 4
-        names:
-        - "Sweeping Edge"
-        - "sweep"
-        - "sweeping"
-        - "sweepedge"
-    LOYALTY:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 4
-        names:
-        - "Loyalty"
-        - "loyal"
-    IMPALING:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 6
-        names:
-        - "Impaling"
-        - "Impale"
-    RIPTIDE:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 4
-        names:
-        - "Riptide"
-    CHANNELING:
-        base-cost: 70
-        level-modifer: 140
-        max-level: 2
-        names:
-        - "Channeling"
-        - "channel"
-    MULTISHOT:
-        base-cost: 70
-        level-modifier: 140
-        max-level: 2
-        names:
-        - "Multishot"
-        - "multi"
-    QUICK_CHARGE:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 4
-        names:
-        - "Quick Charge"
-        - "quick"
-        - "charge"
-    PIERCING:
-        base-cost: 10
-        level-modifier: 150
-        max-level: 5
-        names:
-        - "Piercing"
-    SOUL_SPEED:
-        base-cost: 13
-        level-modifier: 175
-        max-level: 4
-        names:
-        - "Soul Speed"
-        - "soulspeed"
+  DURABILITY:
+    base-cost: 21
+    level-modifier: 130
+    max-level: 5
+    names:
+    - "Unbreaking"
+    - "unb"
+  PROTECTION_ENVIRONMENTAL:
+    base-cost: 10
+    level-modifier: 175
+    max-level: 5
+    names:
+    - "Protection"
+    - "prot"
+  LOOT_BONUS_BLOCKS:
+    base-cost: 20
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Fortune"
+  PROTECTION_FIRE:
+    base-cost: 10
+    level-modifier: 160
+    max-level: 5
+    names:
+    - "Fire Protection"
+    - "fireprot"
+  DIG_SPEED:
+    base-cost: 5
+    level-modifier: 170
+    max-level: 5
+    names:
+    - "Efficiency"
+    - "eff"
+  PROTECTION_FALL:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 5
+    names:
+    - "Feather Falling"
+    - "featherfall"
+    - "feather"
+  SILK_TOUCH:
+    base-cost: 50
+    level-modifier: 120
+    max-level: 2
+    names:
+    - "Silk Touch"
+    - "silk"
+  FROST_WALKER:
+    base-cost: 15
+    level-modifier: 175
+    max-level: 3
+    names:
+    - "Frost Walker"
+    - "frost"
+    - "frostwalker"
+  PROTECTION_EXPLOSIONS:
+    base-cost: 10
+    level-modifier: 145
+    max-level: 5
+    names:
+    - "Blast Protection"
+    - "blastprot"
+    - "blast"
+  PROTECTION_PROJECTILE:
+    base-cost: 10
+    level-modifier: 160
+    max-level: 5
+    names:
+    - "Projectile Protection"
+    - "projprotection"
+    - "projectileprot"
+    - "projprot"
+  OXYGEN:
+    base-cost: 10
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Respiration"
+  WATER_WORKER:
+    base-cost: 35
+    level-modifier: 120
+    max-level: 2
+    names:
+    - "Aqua Affinity"
+    - "aa"
+  THORNS:
+    base-cost: 15
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Thorns"
+    - "thorn"
+  ARROW_INFINITE:
+    base-cost: 30
+    level-modifier: 133
+    max-level: 2
+    names:
+    - "Infinity"
+    - "infinite"
+  DAMAGE_UNDEAD:
+    base-cost: 5
+    level-modifier: 160
+    max-level: 6
+    names:
+    - "Smite"
+  ARROW_FIRE:
+    base-cost: 30
+    level-modifier: 133
+    max-level: 2
+    names:
+    - "Flame"
+  DAMAGE_ALL:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 6
+    names:
+    - "Sharpness"
+    - "sharp"
+  ARROW_KNOCKBACK:
+    base-cost: 24
+    level-modifier: 150
+    max-level: 3
+    names:
+    - "Punch"
+  KNOCKBACK:
+    base-cost: 24
+    level-modifier: 150
+    max-level: 3
+    names:
+    - "Knockback"
+    - "knock"
+  ARROW_DAMAGE:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 6
+    names:
+    - "Power"
+  DAMAGE_ARTHROPODS:
+    base-cost: 5
+    level-modifier: 160
+    max-level: 6
+    names:
+    - "Bane of Arthropods"
+    - "bane"
+    - "boa"
+  LOOT_BONUS_MOBS:
+    base-cost: 12
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Looting"
+    - "loot"
+  FIRE_ASPECT:
+    base-cost: 20
+    level-modifier: 200
+    max-level: 3
+    names:
+    - "Fire Aspect"
+    - "fire"
+  LUCK:
+    base-cost: 13
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Luck of the Sea"
+    - "lots"
+    - "luck"
+    - "luckofthesea"
+  LURE:
+    base-cost: 13
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Lure"
+  DEPTH_STRIDER:
+    base-cost: 13
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Depth Strider"
+    - "depth"
+    - "strider"
+  MENDING:
+    base-cost: 70
+    level-modifier: 140
+    max-level: 2
+    names:
+    - "Mending"
+    - "mend"
+  SWEEPING_EDGE:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 4
+    names:
+    - "Sweeping Edge"
+    - "sweep"
+    - "sweeping"
+    - "sweepedge"
+  LOYALTY:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 4
+    names:
+    - "Loyalty"
+    - "loyal"
+  IMPALING:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 6
+    names:
+    - "Impaling"
+    - "Impale"
+  RIPTIDE:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 4
+    names:
+    - "Riptide"
+  CHANNELING:
+    base-cost: 70
+    level-modifier: 140
+    max-level: 2
+    names:
+    - "Channeling"
+    - "channel"
+  MULTISHOT:
+    base-cost: 70
+    level-modifier: 140
+    max-level: 2
+    names:
+    - "Multishot"
+    - "multi"
+  QUICK_CHARGE:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 4
+    names:
+    - "Quick Charge"
+    - "quick"
+    - "charge"
+  PIERCING:
+    base-cost: 10
+    level-modifier: 150
+    max-level: 5
+    names:
+    - "Piercing"
+  SOUL_SPEED:
+    base-cost: 13
+    level-modifier: 175
+    max-level: 4
+    names:
+    - "Soul Speed"
+    - "soulspeed"
