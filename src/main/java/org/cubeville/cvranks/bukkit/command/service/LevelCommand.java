@@ -206,7 +206,7 @@ public final class LevelCommand implements TabExecutor {
             }
             
             for (final Map.Entry<Enchantment, Integer> enchantment : enchantments.entrySet()) {
-    
+                
                 final ExtendedEnchantment extendedEnchantment = this.byEnchantment.get(enchantment.getKey());
                 if (extendedEnchantment == null) {
                     continue;
@@ -214,7 +214,7 @@ public final class LevelCommand implements TabExecutor {
                 
                 final StringBuilder builder = new StringBuilder();
                 builder.append("§a").append(extendedEnchantment.names.get(0)).append("§r §f-§r ");
-    
+                
                 final int cost = this.getCost(extendedEnchantment, enchantment.getValue(), sender);
                 if (cost == -1) {
                     builder.append("§cCannot be leveled further");

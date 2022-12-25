@@ -19,7 +19,6 @@ import org.bukkit.Server;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -45,7 +44,7 @@ import org.cubeville.cvranks.bukkit.listener.CVRanksEventListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class CVRanksPlugin extends JavaPlugin implements Listener {
+public final class CVRanksPlugin extends JavaPlugin {
     
     public static final String DEFAULT_PERMISSION_MESSAGE = "§cYou do not have permission to execute this command.";
     
@@ -55,6 +54,8 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     public static final String ABILITY_READY_KEEPSAKE = "§bYou will keep your inventory upon your next death.";
     public static final String ABILITY_READY_DEATH_HOUND = "§bYour death hound ability is ready to use again.";
     public static final String ABILITY_READY_RESPAWN = "§bYour respawn ability is ready to use again.";
+    
+    private File configFile;
     
     private long uptime; // Used for notifying when abilities can be used again.
     private Server server;
@@ -71,6 +72,13 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     private Set<UUID> notifyKeepsakeReset;
     private Set<UUID> notifyDeathHoundReset;
     private Set<UUID> notifyRespawnReset;
+    
+    /* BONUS BLOCKS NOTIFICATIONS */
+    private Set<UUID> notifyWoodDisabled;
+    private Set<UUID> notifyFlintDisabled;
+    private Set<UUID> notifyCoalDisabled;
+    private Set<UUID> notifyQuartzDisabled;
+    private Set<UUID> notifyDiamondDisabled;
     
     /* SERVICE CHAIN */
     private Map<UUID, Long> doctorLastUsed;
@@ -117,7 +125,7 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
         } catch (SecurityException e) {
             throw new RuntimeException("Unable to validate data directory at " + dataDirectory.getPath(), e);
         }
-    
+        
         final File configFile = new File(this.getDataFolder(), "config.yml");
         try {
             if (configFile.exists()) {
@@ -128,20 +136,20 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
                 if (!configFile.createNewFile()) {
                     throw new IllegalArgumentException("Config file not created at " + configFile.getPath());
                 }
-            
+                
                 final InputStream defaultConfig = this.getResource(configFile.getName());
                 final FileOutputStream outputStream = new FileOutputStream(configFile);
                 final byte[] buffer = new byte[4096];
                 int bytesRead;
-            
+                
                 if (defaultConfig == null) {
                     throw new IllegalArgumentException("No default config.yml packaged with CVRanks, possible compilation/build issue.");
                 }
-            
+                
                 while ((bytesRead = defaultConfig.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-            
+                
                 outputStream.flush();
                 outputStream.close();
                 defaultConfig.close();
@@ -399,6 +407,8 @@ public final class CVRanksPlugin extends JavaPlugin implements Listener {
     
         this.server.addRecipe(new ShapedRecipe(NamespacedKey.minecraft(Material.SADDLE.name().toLowerCase()), new ItemStack(Material.SADDLE)).shape("XXX", "XXX").setIngredient('X', Material.LEATHER));
     }
+    
+    
     
     private void registerCommand(@NotNull final String commandName, @NotNull final TabExecutor tabExecutor) throws RuntimeException {
         final PluginCommand command = this.getCommand(commandName);
