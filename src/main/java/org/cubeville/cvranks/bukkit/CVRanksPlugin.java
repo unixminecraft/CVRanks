@@ -16,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
+import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
@@ -55,7 +56,10 @@ public final class CVRanksPlugin extends JavaPlugin {
     public static final String ABILITY_READY_DEATH_HOUND = "§bYour death hound ability is ready to use again.";
     public static final String ABILITY_READY_RESPAWN = "§bYour respawn ability is ready to use again.";
     
-    private File configFile;
+    private File dataFolder;
+    private File enchantmentFile;
+    private File disabledNotificationsFile;
+    private File activeRanksFile;
     
     private long uptime; // Used for notifying when abilities can be used again.
     private Server server;
@@ -113,51 +117,6 @@ public final class CVRanksPlugin extends JavaPlugin {
         // GENERAL INITIALIZATION //
         ////////////////////////////
         
-        final File dataDirectory = this.getDataFolder();
-        try {
-            if (dataDirectory.exists()) {
-                if (!dataDirectory.isDirectory()) {
-                    throw new RuntimeException("Data directory is not a directory: " + dataDirectory.getPath());
-                }
-            } else if (!dataDirectory.mkdirs()) {
-                throw new RuntimeException("Data directory not created at " + dataDirectory.getPath());
-            }
-        } catch (SecurityException e) {
-            throw new RuntimeException("Unable to validate data directory at " + dataDirectory.getPath(), e);
-        }
-        
-        final File configFile = new File(this.getDataFolder(), "config.yml");
-        try {
-            if (configFile.exists()) {
-                if (!configFile.isFile()) {
-                    throw new IllegalArgumentException("Config file is not a file: " + configFile.getPath());
-                }
-            } else {
-                if (!configFile.createNewFile()) {
-                    throw new IllegalArgumentException("Config file not created at " + configFile.getPath());
-                }
-                
-                final InputStream defaultConfig = this.getResource(configFile.getName());
-                final FileOutputStream outputStream = new FileOutputStream(configFile);
-                final byte[] buffer = new byte[4096];
-                int bytesRead;
-                
-                if (defaultConfig == null) {
-                    throw new IllegalArgumentException("No default config.yml packaged with CVRanks, possible compilation/build issue.");
-                }
-                
-                while ((bytesRead = defaultConfig.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-                
-                outputStream.flush();
-                outputStream.close();
-                defaultConfig.close();
-            }
-        } catch (IOException | SecurityException e) {
-            throw new IllegalArgumentException("Unable to load config file at " + configFile.getPath(), e);
-        }
-        
         this.uptime = 0L;
         this.server = this.getServer();
         this.scheduler = this.server.getScheduler();
@@ -178,6 +137,13 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.notifyKeepsakeReset = new HashSet<UUID>();
         this.notifyDeathHoundReset = new HashSet<UUID>();
         this.notifyRespawnReset = new HashSet<UUID>();
+        
+        /* BONUS BLOCKS NOTIFICATIONS */
+        this.notifyWoodDisabled = new HashSet<UUID>();
+        this.notifyFlintDisabled = new HashSet<UUID>();
+        this.notifyCoalDisabled = new HashSet<UUID>();
+        this.notifyQuartzDisabled = new HashSet<UUID>();
+        this.notifyDiamondDisabled = new HashSet<UUID>();
         
         /* SERVICE CHAIN */
         this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
@@ -204,6 +170,14 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.miniRankMyceliumActive = new HashSet<UUID>();
         this.miniRankGlassActive = new HashSet<UUID>();
         this.miniRankObsidianActive = new HashSet<UUID>();
+        
+        ///////////////////////////
+        // CONFIGURATION LOADING //
+        ///////////////////////////
+        
+        this.reloadEnchantments();
+        this.reloadDisabledNotifications();
+        this.reloadActiveRanks();
         
         ///////////////////////////////
         // RECURRING TASK SCHEDULING //
@@ -408,7 +382,71 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.server.addRecipe(new ShapedRecipe(NamespacedKey.minecraft(Material.SADDLE.name().toLowerCase()), new ItemStack(Material.SADDLE)).shape("XXX", "XXX").setIngredient('X', Material.LEATHER));
     }
     
+    private void reloadDataFolder() throws RuntimeException {
+        
+        this.dataFolder = this.getDataFolder();
+        try {
+            if (this.dataFolder.exists()) {
+                if (!this.dataFolder.isDirectory()) {
+                    throw new RuntimeException("Data folder is not a directory: " + this.dataFolder.getPath());
+                }
+            } else if (!this.dataFolder.mkdirs()) {
+                throw new RuntimeException("Data folder not created at " + this.dataFolder.getPath());
+            }
+        } catch (final SecurityException e) {
+            throw new RuntimeException("Unable to validate data folder at " + this.dataFolder.getPath(), e);
+        }
+    }
     
+    public void reloadEnchantments() throws RuntimeException {
+        
+        this.reloadDataFolder();
+        
+        final File dataDirectory = this.getDataFolder();
+        try {
+            if (dataDirectory.exists()) {
+                if (!dataDirectory.isDirectory()) {
+                    throw new RuntimeException("Data directory is not a directory: " + dataDirectory.getPath());
+                }
+            } else if (!dataDirectory.mkdirs()) {
+                throw new RuntimeException("Data directory not created at " + dataDirectory.getPath());
+            }
+        } catch (final SecurityException e) {
+            throw new RuntimeException("Unable to validate data directory at " + dataDirectory.getPath(), e);
+        }
+        
+        final File enchantmentsFile = new File(this.getDataFolder(), "config.yml");
+        try {
+            if (enchantmentsFile.exists()) {
+                if (!enchantmentsFile.isFile()) {
+                    throw new IllegalArgumentException("Config file is not a file: " + enchantmentsFile.getPath());
+                }
+            } else {
+                if (!enchantmentsFile.createNewFile()) {
+                    throw new IllegalArgumentException("Config file not created at " + enchantmentsFile.getPath());
+                }
+            
+                final InputStream defaultConfig = this.getResource(enchantmentsFile.getName());
+                final FileOutputStream outputStream = new FileOutputStream(enchantmentsFile);
+                final byte[] buffer = new byte[4096];
+                int bytesRead;
+            
+                if (defaultConfig == null) {
+                    throw new IllegalArgumentException("No default config.yml packaged with CVRanks, possible compilation/build issue.");
+                }
+            
+                while ((bytesRead = defaultConfig.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+            
+                outputStream.flush();
+                outputStream.close();
+                defaultConfig.close();
+            }
+        } catch (final IOException | SecurityException e) {
+            throw new IllegalArgumentException("Unable to load config file at " + enchantmentsFile.getPath(), e);
+        }
+    }
     
     private void registerCommand(@NotNull final String commandName, @NotNull final TabExecutor tabExecutor) throws RuntimeException {
         final PluginCommand command = this.getCommand(commandName);
