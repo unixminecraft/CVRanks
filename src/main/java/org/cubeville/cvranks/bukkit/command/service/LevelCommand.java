@@ -28,56 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 public final class LevelCommand implements TabExecutor {
     
-    ///////////////////////////////////////////////////////////////
-    //             EXTENDED ENCHANTMENT INNER CLASS              //
-    //                                                           //
-    // Used for determining the XP cost of leveling a particular //
-    //   enchantment, as well as the (expanded) maximum level.   //
-    ///////////////////////////////////////////////////////////////
-    
-    private static final class ExtendedEnchantment {
-        
-        private final Enchantment enchantment;
-        private final int baseCost;
-        private final int levelModifier;
-        private final int maxLevel;
-        private final List<String> names;
-        
-        private ExtendedEnchantment(@NotNull final Enchantment enchantment, @NotNull final ConfigurationSection config) throws IllegalArgumentException {
-            
-            if (!config.isSet("base-cost") || !config.isInt("base-cost")) {
-                throw new IllegalArgumentException("Missing base-cost for enchantment " + enchantment.getKey().getKey() + ", skipping.");
-            }
-            if (!config.isSet("level-modifier") || !config.isInt("level-modifier")) {
-                throw new IllegalArgumentException("Missing level-modifier for enchantment " + enchantment.getKey().getKey() + ", skipping.");
-            }
-            if (!config.isSet("max-level") || !config.isInt("max-level")) {
-                throw new IllegalArgumentException("Missing max-level for enchantment " + enchantment.getKey().getKey() + ", skipping.");
-            }
-            
-            this.enchantment = enchantment;
-            this.baseCost = config.getInt("base-cost");
-            this.levelModifier = config.getInt("level-modifier");
-            this.maxLevel = config.getInt("max-level");
-            this.names = config.getStringList("names");
-        }
-        
-        @Override
-        @NotNull
-        public String toString() {
-            
-            final Map<String, Object> data = new ConcurrentHashMap<String, Object>();
-            
-            data.put("enchantment", this.enchantment.getKey().toString());
-            data.put("base-cost", this.baseCost);
-            data.put("level-modifier", this.levelModifier);
-            data.put("max-level", this.maxLevel);
-            data.put("names", this.names.toString());
-            
-            return data.toString();
-        }
-    }
-    
     /////////////////////////
     // LEVEL COMMAND LOGIC //
     /////////////////////////
@@ -87,83 +37,7 @@ public final class LevelCommand implements TabExecutor {
     
     public LevelCommand(@NotNull final CVRanksPlugin plugin) throws IllegalArgumentException {
         
-        final Logger logger = plugin.getLogger();
-        this.byEnchantment = new ConcurrentHashMap<Enchantment, ExtendedEnchantment>();
-        this.byName = new ConcurrentHashMap<String, ExtendedEnchantment>();
         
-        final YamlConfiguration config = new YamlConfiguration();
-        try {
-            config.load(new File(plugin.getDataFolder(), "config.yml"));
-        } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unable to load the main config.", e);
-        }
-        
-        final ConfigurationSection enchantmentsConfig = config.getConfigurationSection("enchantments");
-        if (enchantmentsConfig == null) {
-            throw new IllegalArgumentException("Enchantments section does not exist in CVRanks config.");
-        }
-        
-        logger.log(Level.INFO, "LOADING ENCHANTMENTS FOR LEVELING STARTING");
-        for (final String enchantmentName : enchantmentsConfig.getKeys(false)) {
-            
-            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentName.toLowerCase()));
-            if (enchantment == null) {
-                // Backwards compatibility
-                enchantment = Enchantment.getByName(enchantmentName);
-            }
-            if (enchantment == null) {
-                logger.log(Level.WARNING, "Unable to find enchantment with the name " + enchantmentName + ", skipping.");
-                continue;
-            }
-            
-            final ConfigurationSection enchantmentConfig = enchantmentsConfig.getConfigurationSection(enchantmentName);
-            if (enchantmentConfig == null) {
-                logger.log(Level.WARNING, "No cost configuration defined for enchantment " + enchantmentName + ", skipping.");
-                continue;
-            }
-            
-            final ExtendedEnchantment extendedEnchantment;
-            try {
-                extendedEnchantment = new ExtendedEnchantment(enchantment, enchantmentConfig);
-            } catch (IllegalArgumentException e) {
-                logger.log(Level.WARNING, e.getMessage());
-                continue;
-            }
-            
-            ExtendedEnchantment check = this.byEnchantment.put(enchantment, extendedEnchantment);
-            if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
-                logger.log(Level.WARNING, "Duplicate registered by enchantment for " + enchantmentName + ", overwriting with the new one.");
-                logger.log(Level.WARNING, "Already-registered: " + check.toString());
-                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
-            }
-            
-            check = this.byName.put(enchantment.getKey().getKey(), extendedEnchantment);
-            if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
-                logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
-                logger.log(Level.WARNING, "Already-registered: " + check.toString());
-                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
-            }
-            
-            check = this.byName.put(enchantment.getName(), extendedEnchantment);
-            if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
-                logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
-                logger.log(Level.WARNING, "Already-registered: " + check.toString());
-                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
-            }
-            
-            for (final String name : extendedEnchantment.names) {
-                check = this.byName.put(name, extendedEnchantment);
-                if (check != null && !check.enchantment.getKey().getKey().equals(enchantment.getKey().getKey())) {
-                    logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
-                    logger.log(Level.WARNING, "Already-registered: " + check.toString());
-                    logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
-                }
-            }
-            
-            logger.log(Level.INFO, "Successfully registered enchantment " + enchantmentName + ".");
-        }
-    
-        logger.log(Level.INFO, "LOADING ENCHANTMENTS FOR LEVELING FINISHED");
     }
     
     @Override

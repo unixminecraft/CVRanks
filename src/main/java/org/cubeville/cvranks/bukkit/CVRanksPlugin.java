@@ -12,13 +12,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
@@ -56,6 +61,28 @@ public final class CVRanksPlugin extends JavaPlugin {
     public static final String ABILITY_READY_DEATH_HOUND = "§bYour death hound ability is ready to use again.";
     public static final String ABILITY_READY_RESPAWN = "§bYour respawn ability is ready to use again.";
     
+    private static final String DISABLE_NOTIFY_WOOD = "disable_notify_wood";
+    private static final String DISABLE_NOTIFY_FLINT = "disable_notify_flint";
+    private static final String DISABLE_NOTIFY_COAL = "disable_notify_coal";
+    private static final String DISABLE_NOTIFY_QUARTZ = "disable_notify_quartz";
+    private static final String DISABLE_NOTIFY_DIAMOND = "disable_notify_diamond";
+    private static final String DISABLE_NOTIFY_IRON = "disable_notify_iron";
+    private static final String DISABLE_NOTIFY_GOLD = "disable_notify_gold";
+    private static final String DISABLE_NOTIFY_COPPER = "disable_notify_copper";
+    
+    private static final String ACTIVE_INSTA_SMELT = "active_insta_smelt";
+    private static final String ACTIVE_NIGHT_STALKER = "active_night_stalker";
+    private static final String ACTIVE_STONE_MASON = "active_stone_mason";
+    private static final String ACTIVE_MUSH_GARDENER = "active_mush_gardener";
+    private static final String ACTIVE_BRICK_LAYER = "active_brick_layer";
+    private static final String ACTIVE_MASTER_CARPENTER = "active_master_carpenter";
+    private static final String ACTIVE_SCUBA = "active_scuba";
+    private static final String ACTIVE_MINI_RANK_MYCELIUM = "active_mini_rank_mycelium";
+    private static final String ACTIVE_MINI_RANK_GLASS = "active_mini_rank_glass";
+    private static final String ACTIVE_MINI_RANK_OBSIDIAN = "active_mini_rank_obsidian";
+    
+    private Logger logger;
+    
     private File dataFolder;
     private File enchantmentFile;
     private File disabledNotificationsFile;
@@ -64,6 +91,10 @@ public final class CVRanksPlugin extends JavaPlugin {
     private long uptime; // Used for notifying when abilities can be used again.
     private Server server;
     private BukkitScheduler scheduler;
+    
+    /* EXTENDED ENCHANTMENTS */
+    private Map<Enchantment, ExtendedEnchantment> byEnchantment;
+    private Map<String, ExtendedEnchantment> byName;
     
     /* GENERIC / NON-PERK RELATED */
     private Map<UUID, Location> deathLocations;
@@ -83,6 +114,9 @@ public final class CVRanksPlugin extends JavaPlugin {
     private Set<UUID> notifyCoalDisabled;
     private Set<UUID> notifyQuartzDisabled;
     private Set<UUID> notifyDiamondDisabled;
+    private Set<UUID> notifyIronDisabled;
+    private Set<UUID> notifyGoldDisabled;
+    private Set<UUID> notifyCopperDisabled;
     
     /* SERVICE CHAIN */
     private Map<UUID, Long> doctorLastUsed;
@@ -117,6 +151,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         // GENERAL INITIALIZATION //
         ////////////////////////////
         
+        this.logger = this.getLogger();
+        
         this.uptime = 0L;
         this.server = this.getServer();
         this.scheduler = this.server.getScheduler();
@@ -125,6 +161,10 @@ public final class CVRanksPlugin extends JavaPlugin {
          * Where able, use ConcurrentHashMaps instead of HashMaps as neither the
          * key nor value can be null.
          */
+        
+        /* EXTENDED ENCHANTMENTS */
+        this.byEnchantment = new ConcurrentHashMap<Enchantment, ExtendedEnchantment>();
+        this.byName = new ConcurrentHashMap<String, ExtendedEnchantment>();
         
         /* GENERIC / NON-PERK RELATED */
         this.deathLocations = new ConcurrentHashMap<UUID, Location>();
@@ -144,6 +184,9 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.notifyCoalDisabled = new HashSet<UUID>();
         this.notifyQuartzDisabled = new HashSet<UUID>();
         this.notifyDiamondDisabled = new HashSet<UUID>();
+        this.notifyIronDisabled = new HashSet<UUID>();
+        this.notifyGoldDisabled = new HashSet<UUID>();
+        this.notifyCopperDisabled = new HashSet<UUID>();
         
         /* SERVICE CHAIN */
         this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
@@ -186,8 +229,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         /*
          * UPTIME / NIGHTSTALKER / SCUBA TIMER
          * 
-         * This runs every 40 ticks (2 seconds) after a 40 tick (2 second)
-         * delay and performs the following operations:
+         * This runs every 40 ticks (2 seconds) after a 40 tick delay and
+         * performs the following operations:
          * - Adds 40 ticks to the uptime counter
          * - Applies night vision to players with nightstalker enabled
          * - Applies underwater breathing to players with scuba enabled
@@ -382,6 +425,108 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.server.addRecipe(new ShapedRecipe(NamespacedKey.minecraft(Material.SADDLE.name().toLowerCase()), new ItemStack(Material.SADDLE)).shape("XXX", "XXX").setIngredient('X', Material.LEATHER));
     }
     
+    public void reloadEnchantments() throws RuntimeException {
+        
+        this.reloadDataFolder();
+        this.enchantmentFile = this.reloadFile("enchantments");
+        final ConfigurationSection config = this.loadConfig(this.enchantmentFile);
+        
+        this.logger.log(Level.INFO, "Load Enchantments for Leveling - STARTING");
+        
+        for (final String enchantmentName : config.getKeys(false)) {
+            
+            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentName.toLowerCase()));
+            if (enchantment == null) {
+                // Backwards compatibility
+                enchantment = Enchantment.getByName(enchantmentName);
+            }
+            if (enchantment == null) {
+                this.logger.log(Level.WARNING, "Unable to find enchantment with name " + enchantmentName + ", skipping.");
+                continue;
+            }
+            
+            final ConfigurationSection enchantmentConfig = config.getConfigurationSection(enchantmentName);
+            if (enchantmentConfig == null) {
+                this.logger.log(Level.WARNING, "No enchantment configuration defined for enchantment " + enchantmentName + ", skipping.");
+                continue;
+            }
+            
+            final ExtendedEnchantment extendedEnchantment;
+            try {
+                extendedEnchantment = new ExtendedEnchantment(enchantment, enchantmentConfig);
+            } catch (final IllegalArgumentException e) {
+                this.logger.log(Level.WARNING, e.getMessage());
+                continue;
+            }
+            
+            ExtendedEnchantment check = this.byEnchantment.put(enchantment, extendedEnchantment);
+            if (check != null && !check.getEnchantment().getKey().getKey().equals(enchantment.getKey().getKey())) {
+                this.logger.log(Level.WARNING, "Duplicate registered by enchantment for " + enchantmentName + ", overwriting with the new one.");
+                this.logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                this.logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+            }
+            
+            check = this.byName.put(enchantment.getKey().getKey().toLowerCase(), extendedEnchantment);
+            if (check != null && !check.getEnchantment().getKey().getKey().equals(enchantment.getKey().getKey())) {
+                logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
+                logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+            }
+            
+            check = this.byName.put(enchantment.getName().toLowerCase(), extendedEnchantment);
+            if (check != null && !check.getEnchantment().getKey().getKey().equals(enchantment.getKey().getKey())) {
+                logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
+                logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+            }
+            
+            for (final String name : extendedEnchantment.getNames()) {
+                
+                check = this.byName.put(name.toLowerCase(), extendedEnchantment);
+                if (check != null && !check.getEnchantment().getKey().getKey().equals(enchantment.getKey().getKey())) {
+                    logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
+                    logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                    logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+                }
+            }
+            
+            this.logger.log(Level.INFO, "Successfully registered enchantment " + enchantmentName + ".");
+        }
+        
+        this.logger.log(Level.INFO, "Load Enchantments for Leveling - STARTING");
+    }
+    
+    public void reloadDisabledNotifications() throws RuntimeException {
+        
+        this.reloadDataFolder();
+        this.disabledNotificationsFile = this.reloadFile("disabled_notifications");
+        final ConfigurationSection config = this.loadConfig(this.disabledNotificationsFile);
+        
+        this.notifyWoodDisabled.clear();
+        this.notifyFlintDisabled.clear();
+        this.notifyCoalDisabled.clear();
+        this.notifyQuartzDisabled.clear();
+        this.notifyDiamondDisabled.clear();
+        this.notifyIronDisabled.clear();
+        this.notifyGoldDisabled.clear();
+        this.notifyCopperDisabled.clear();
+        
+        this.notifyWoodDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_WOOD)));
+        this.notifyFlintDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_FLINT)));
+        this.notifyCoalDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_COAL)));
+        this.notifyQuartzDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_QUARTZ)));
+        this.notifyDiamondDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_DIAMOND)));
+        this.notifyIronDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_IRON)));
+        this.notifyGoldDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_GOLD)));
+        this.notifyCopperDisabled.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.DISABLE_NOTIFY_COPPER)));
+    }
+    
+    public void reloadActiveRanks() throws RuntimeException {
+        
+        this.reloadDataFolder();
+        this.activeRanksFile = this.reloadFile("active_ranks");
+    }
+    
     private void reloadDataFolder() throws RuntimeException {
         
         this.dataFolder = this.getDataFolder();
@@ -398,54 +543,55 @@ public final class CVRanksPlugin extends JavaPlugin {
         }
     }
     
-    public void reloadEnchantments() throws RuntimeException {
+    @NotNull
+    private File reloadFile(@NotNull final String fileName) throws RuntimeException {
         
-        this.reloadDataFolder();
-        
-        final File dataDirectory = this.getDataFolder();
+        final File file = new File(this.dataFolder, fileName + ".yml");
         try {
-            if (dataDirectory.exists()) {
-                if (!dataDirectory.isDirectory()) {
-                    throw new RuntimeException("Data directory is not a directory: " + dataDirectory.getPath());
-                }
-            } else if (!dataDirectory.mkdirs()) {
-                throw new RuntimeException("Data directory not created at " + dataDirectory.getPath());
-            }
-        } catch (final SecurityException e) {
-            throw new RuntimeException("Unable to validate data directory at " + dataDirectory.getPath(), e);
-        }
-        
-        final File enchantmentsFile = new File(this.getDataFolder(), "config.yml");
-        try {
-            if (enchantmentsFile.exists()) {
-                if (!enchantmentsFile.isFile()) {
-                    throw new IllegalArgumentException("Config file is not a file: " + enchantmentsFile.getPath());
+            if (file.exists()) {
+                if (!file.isFile()) {
+                    throw new RuntimeException("Config file is not a file: " + file.getPath());
                 }
             } else {
-                if (!enchantmentsFile.createNewFile()) {
-                    throw new IllegalArgumentException("Config file not created at " + enchantmentsFile.getPath());
+                if (!file.createNewFile()) {
+                    throw new RuntimeException("Config file not created at " + file.getPath());
                 }
-            
-                final InputStream defaultConfig = this.getResource(enchantmentsFile.getName());
-                final FileOutputStream outputStream = new FileOutputStream(enchantmentsFile);
+                
+                final InputStream defaultConfig = this.getResource(file.getName());
+                final FileOutputStream outputStream = new FileOutputStream(file);
                 final byte[] buffer = new byte[4096];
                 int bytesRead;
-            
+                
                 if (defaultConfig == null) {
-                    throw new IllegalArgumentException("No default config.yml packaged with CVRanks, possible compilation/build issue.");
+                    throw new RuntimeException("No default " + file.getName() + " packaged with CVRanks, possible compilation/build issue.");
                 }
-            
+                
                 while ((bytesRead = defaultConfig.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-            
+                
                 outputStream.flush();
                 outputStream.close();
                 defaultConfig.close();
             }
         } catch (final IOException | SecurityException e) {
-            throw new IllegalArgumentException("Unable to load config file at " + enchantmentsFile.getPath(), e);
+            throw new RuntimeException("Unable to load config file at" + file.getPath(), e);
         }
+        
+        return file;
+    }
+    
+    @NotNull
+    private ConfigurationSection loadConfig(@NotNull final File file) throws RuntimeException {
+        
+        final YamlConfiguration config = new YamlConfiguration();
+        try {
+            config.load(file);
+        } catch (final IOException | InvalidConfigurationException | IllegalArgumentException e) {
+            throw new RuntimeException("Unable to load configuration from file at " + file.getPath(), e);
+        }
+        
+        return config;
     }
     
     private void registerCommand(@NotNull final String commandName, @NotNull final TabExecutor tabExecutor) throws RuntimeException {
@@ -530,6 +676,20 @@ public final class CVRanksPlugin extends JavaPlugin {
         return removals;
     }
     
+    ///////////////////////////
+    // EXTENDED ENCHANTMENTS //
+    ///////////////////////////
+    
+    @Nullable
+    public ExtendedEnchantment getExtendedEnchantment(@NotNull final Enchantment enchantment) {
+        return this.byEnchantment.get(enchantment);
+    }
+    
+    @Nullable
+    public ExtendedEnchantment getExtendedEnchantment(@NotNull final String name) {
+        return this.byName.get(name.toLowerCase());
+    }
+    
     ////////////////////////////////
     // GENERIC / NON-PERK RELATED //
     ////////////////////////////////
@@ -563,6 +723,10 @@ public final class CVRanksPlugin extends JavaPlugin {
     public void removePendingDeathHoundNotification(@NotNull final UUID playerId) {
         this.pendingDeathHoundNotifications.remove(playerId);
     }
+    
+    ///////////////////////////////
+    // BONUS BLOCK NOTIFICATIONS //
+    ///////////////////////////////
     
     //////////////////////////////
     // PERK RESET NOTIFICATIONS //
