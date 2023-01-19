@@ -628,6 +628,30 @@ public final class CVRanksPlugin extends JavaPlugin {
         }
     }
     
+    private void saveUpdatedPlayers(@NotNull final Set<UUID> uniqueIds, @NotNull final File file, @NotNull final String key, final boolean enable, @NotNull final UUID playerId) throws RuntimeException {
+        
+        final List<String> rawUniqueIds = new ArrayList<String>();
+        for (final UUID uniqueId : uniqueIds) {
+            rawUniqueIds.add(uniqueId.toString());
+        }
+        
+        final YamlConfiguration config = this.loadConfig(file);
+        config.set(key, rawUniqueIds);
+        try {
+            this.saveConfig(file, config);
+        } catch (final RuntimeException e) {
+            
+            final StringBuilder builder = new StringBuilder();
+            builder.append("Unable to ");
+            builder.append(enable ? "remove" : "add");
+            builder.append(" UUID ").append(playerId.toString()).append(" ");
+            builder.append(enable ? "from" : "to");
+            builder.append(" ").append(key);
+            
+            throw new RuntimeException(builder.toString(), e);
+        }
+    }
+    
     @NotNull
     private Set<UUID> getUniqueIds(@NotNull final List<String> rawUniqueIds) throws RuntimeException {
         
@@ -955,30 +979,6 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
-    private void saveUpdatedPlayers(@NotNull final Set<UUID> uniqueIds, @NotNull final File file, @NotNull final String key, final boolean enable, @NotNull final UUID playerId) throws RuntimeException {
-        
-        final List<String> rawUniqueIds = new ArrayList<String>();
-        for (final UUID uniqueId : uniqueIds) {
-            rawUniqueIds.add(uniqueId.toString());
-        }
-        
-        final YamlConfiguration config = this.loadConfig(file);
-        config.set(key, rawUniqueIds);
-        try {
-            this.saveConfig(file, config);
-        } catch (final RuntimeException e) {
-            
-            final StringBuilder builder = new StringBuilder();
-            builder.append("Unable to ");
-            builder.append(enable ? "remove" : "add");
-            builder.append(" UUID ").append(playerId.toString()).append(" ");
-            builder.append(enable ? "from" : "to");
-            builder.append(" ").append(key);
-            
-            throw new RuntimeException(builder.toString(), e);
-        }
-    }
-    
     //////////////////////////////
     // PERK RESET NOTIFICATIONS //
     //////////////////////////////
@@ -1120,24 +1120,44 @@ public final class CVRanksPlugin extends JavaPlugin {
         return this.instaSmeltActive.contains(playerId);
     }
     
-    public boolean enableInstaSmelt(@NotNull final UUID playerId) {
-        return this.instaSmeltActive.add(playerId);
+    public boolean enableInstaSmelt(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.instaSmeltActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.instaSmeltActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_INSTA_SMELT, true, playerId);
+        return true;
     }
     
-    public boolean disableInstaSmelt(@NotNull final UUID playerId) {
-        return this.instaSmeltActive.remove(playerId);
+    public boolean disableInstaSmelt(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.instaSmeltActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.instaSmeltActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_INSTA_SMELT, false, playerId);
+        return true;
     }
     
     public boolean isNightStalkerEnabled(@NotNull final UUID playerId) {
         return this.nightStalkerActive.contains(playerId);
     }
     
-    public boolean enableNightStalker(@NotNull final UUID playerId) {
-        return this.nightStalkerActive.add(playerId);
+    public boolean enableNightStalker(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.nightStalkerActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.nightStalkerActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_NIGHT_STALKER, true, playerId);
+        return true;
     }
     
-    public boolean disableNightStalker(@NotNull final UUID playerId) {
-        return this.nightStalkerActive.remove(playerId);
+    public boolean disableNightStalker(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.nightStalkerActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.nightStalkerActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_NIGHT_STALKER, false, playerId);
+        return true;
     }
     
     /////////////////
@@ -1148,48 +1168,88 @@ public final class CVRanksPlugin extends JavaPlugin {
         return this.stoneMasonActive.contains(playerId);
     }
     
-    public boolean enableStoneMason(@NotNull final UUID playerId) {
-        return this.stoneMasonActive.add(playerId);
+    public boolean enableStoneMason(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.stoneMasonActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.stoneMasonActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_STONE_MASON, true, playerId);
+        return true;
     }
     
-    public boolean disableStoneMason(@NotNull final UUID playerId) {
-        return this.stoneMasonActive.remove(playerId);
+    public boolean disableStoneMason(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.stoneMasonActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.stoneMasonActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_STONE_MASON, false, playerId);
+        return true;
     }
     
     public boolean isMushGardenerEnabled(@NotNull final UUID playerId) {
         return this.mushGardenerActive.contains(playerId);
     }
     
-    public boolean enableMushGardener(@NotNull final UUID playerId) {
-        return this.mushGardenerActive.add(playerId);
+    public boolean enableMushGardener(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.mushGardenerActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.mushGardenerActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MUSH_GARDENER, true, playerId);
+        return true;
     }
     
-    public boolean disableMushGardener(@NotNull final UUID playerId) {
-        return this.mushGardenerActive.remove(playerId);
+    public boolean disableMushGardener(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.mushGardenerActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.mushGardenerActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MUSH_GARDENER, false, playerId);
+        return true;
     }
     
     public boolean isBrickLayerEnabled(@NotNull final UUID playerId) {
         return this.brickLayerActive.contains(playerId);
     }
     
-    public boolean enableBrickLayer(@NotNull final UUID playerId) {
-        return this.brickLayerActive.add(playerId);
+    public boolean enableBrickLayer(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.brickLayerActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.brickLayerActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_BRICK_LAYER, true, playerId);
+        return true;
     }
     
-    public boolean disableBrickLayer(@NotNull final UUID playerId) {
-        return this.brickLayerActive.remove(playerId);
+    public boolean disableBrickLayer(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.brickLayerActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.brickLayerActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_BRICK_LAYER, false, playerId);
+        return true;
     }
     
     public boolean isMasterCarpenterEnabled(@NotNull final UUID playerId) {
         return this.masterCarpenterActive.contains(playerId);
     }
     
-    public boolean enableMasterCarpenter(@NotNull final UUID playerId) {
-        return this.masterCarpenterActive.add(playerId);
+    public boolean enableMasterCarpenter(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.masterCarpenterActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.masterCarpenterActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MASTER_CARPENTER, true, playerId);
+        return true;
     }
     
-    public boolean disableMasterCarpenter(@NotNull final UUID playerId) {
-        return this.masterCarpenterActive.remove(playerId);
+    public boolean disableMasterCarpenter(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.masterCarpenterActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.masterCarpenterActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MASTER_CARPENTER, false, playerId);
+        return true;
     }
     
     /////////////////
@@ -1260,47 +1320,87 @@ public final class CVRanksPlugin extends JavaPlugin {
         return this.scubaActive.contains(playerId);
     }
     
-    public boolean enableScuba(@NotNull final UUID playerId) {
-        return this.scubaActive.add(playerId);
+    public boolean enableScuba(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.scubaActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.scubaActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_SCUBA, true, playerId);
+        return true;
     }
     
-    public boolean disableScuba(@NotNull final UUID playerId) {
-        return this.scubaActive.remove(playerId);
+    public boolean disableScuba(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.scubaActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.scubaActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_SCUBA, false, playerId);
+        return true;
     }
     
     public boolean isMiniRankMyceliumEnabled(@NotNull final UUID playerId) {
         return this.miniRankMyceliumActive.contains(playerId);
     }
     
-    public boolean enableMiniRankMycelium(@NotNull final UUID playerId) {
-        return this.miniRankMyceliumActive.add(playerId);
+    public boolean enableMiniRankMycelium(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.miniRankMyceliumActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.miniRankMyceliumActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MINI_RANK_MYCELIUM, true, playerId);
+        return true;
     }
     
-    public boolean disableMiniRankMycelium(@NotNull final UUID playerId) {
-        return this.miniRankMyceliumActive.remove(playerId);
+    public boolean disableMiniRankMycelium(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.miniRankMyceliumActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.miniRankMyceliumActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MINI_RANK_MYCELIUM, false, playerId);
+        return true;
     }
     
     public boolean isMiniRankGlassEnabled(@NotNull final UUID playerId) {
         return this.miniRankGlassActive.contains(playerId);
     }
     
-    public boolean enableMiniRankGlass(@NotNull final UUID playerId) {
-        return this.miniRankGlassActive.add(playerId);
+    public boolean enableMiniRankGlass(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.miniRankGlassActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.miniRankGlassActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MINI_RANK_GLASS, true, playerId);
+        return true;
     }
     
-    public boolean disableMiniRankGlass(@NotNull final UUID playerId) {
-        return this.miniRankGlassActive.remove(playerId);
+    public boolean disableMiniRankGlass(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.miniRankGlassActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.miniRankGlassActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MINI_RANK_GLASS, false, playerId);
+        return true;
     }
     
     public boolean isMiniRankObsidianEnabled(@NotNull final UUID playerId) {
         return this.miniRankObsidianActive.contains(playerId);
     }
     
-    public boolean enableMiniRankObsidian(@NotNull final UUID playerId) {
-        return this.miniRankObsidianActive.add(playerId);
+    public boolean enableMiniRankObsidian(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.miniRankObsidianActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.miniRankObsidianActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MINI_RANK_OBSIDIAN, true, playerId);
+        return true;
     }
     
-    public boolean disableMiniRankObsidian(@NotNull final UUID playerId) {
-        return this.miniRankObsidianActive.remove(playerId);
+    public boolean disableMiniRankObsidian(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.miniRankObsidianActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.miniRankObsidianActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_MINI_RANK_OBSIDIAN, false, playerId);
+        return false;
     }
 }
