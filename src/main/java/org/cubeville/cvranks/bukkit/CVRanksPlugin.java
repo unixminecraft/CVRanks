@@ -4,10 +4,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -525,6 +527,29 @@ public final class CVRanksPlugin extends JavaPlugin {
         
         this.reloadDataFolder();
         this.activeRanksFile = this.reloadFile("active_ranks");
+        final ConfigurationSection config = this.loadConfig(this.activeRanksFile);
+        
+        this.instaSmeltActive.clear();
+        this.nightStalkerActive.clear();
+        this.stoneMasonActive.clear();
+        this.mushGardenerActive.clear();
+        this.brickLayerActive.clear();
+        this.masterCarpenterActive.clear();
+        this.scubaActive.clear();
+        this.miniRankMyceliumActive.clear();
+        this.miniRankGlassActive.clear();
+        this.miniRankObsidianActive.clear();
+        
+        this.instaSmeltActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_INSTA_SMELT)));
+        this.nightStalkerActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_NIGHT_STALKER)));
+        this.stoneMasonActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_STONE_MASON)));
+        this.mushGardenerActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_MUSH_GARDENER)));
+        this.brickLayerActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_BRICK_LAYER)));
+        this.masterCarpenterActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_MASTER_CARPENTER)));
+        this.scubaActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_SCUBA)));
+        this.miniRankMyceliumActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_MINI_RANK_MYCELIUM)));
+        this.miniRankGlassActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_MINI_RANK_GLASS)));
+        this.miniRankObsidianActive.addAll(this.getUniqueIds(config.getStringList(CVRanksPlugin.ACTIVE_MINI_RANK_OBSIDIAN)));
     }
     
     private void reloadDataFolder() throws RuntimeException {
@@ -582,7 +607,7 @@ public final class CVRanksPlugin extends JavaPlugin {
     }
     
     @NotNull
-    private ConfigurationSection loadConfig(@NotNull final File file) throws RuntimeException {
+    private YamlConfiguration loadConfig(@NotNull final File file) throws RuntimeException {
         
         final YamlConfiguration config = new YamlConfiguration();
         try {
@@ -594,7 +619,33 @@ public final class CVRanksPlugin extends JavaPlugin {
         return config;
     }
     
+    private void saveConfig(@NotNull final File file, @NotNull final YamlConfiguration config) throws RuntimeException {
+        
+        try {
+            config.save(file);
+        } catch (final IOException | IllegalArgumentException e) {
+            throw new RuntimeException("Unable to save configuration to file at " + file.getPath(), e);
+        }
+    }
+    
+    @NotNull
+    private Set<UUID> getUniqueIds(@NotNull final List<String> rawUniqueIds) throws RuntimeException {
+        
+        final Set<UUID> uniqueIds = new HashSet<UUID>();
+        for (final String rawUniqueId : rawUniqueIds) {
+            
+            try {
+                uniqueIds.add(UUID.fromString(rawUniqueId));
+            } catch (final IllegalArgumentException e) {
+                throw new RuntimeException("Unable to parse UUID from string value: " + rawUniqueId, e);
+            }
+        }
+        
+        return uniqueIds;
+    }
+    
     private void registerCommand(@NotNull final String commandName, @NotNull final TabExecutor tabExecutor) throws RuntimeException {
+        
         final PluginCommand command = this.getCommand(commandName);
         if (command == null) {
             throw new RuntimeException("Cannot find the command /" + commandName);
@@ -727,6 +778,206 @@ public final class CVRanksPlugin extends JavaPlugin {
     ///////////////////////////////
     // BONUS BLOCK NOTIFICATIONS //
     ///////////////////////////////
+    
+    public boolean isNotifyWoodDisabled(@NotNull final UUID playerId) {
+        return this.notifyWoodDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyWood(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyWoodDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyWoodDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_WOOD, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyWood(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyWoodDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyWoodDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_WOOD, true, playerId);
+        return true;
+    }
+    
+    public boolean isNotifyFlintDisabled(@NotNull final UUID playerId) {
+        return this.notifyFlintDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyFlint(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyFlintDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyFlintDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_FLINT, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyFlint(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyFlintDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyFlintDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_FLINT, true, playerId);
+        return true;
+    }
+    
+    public boolean isNotifyCoalDisabled(@NotNull final UUID playerId) {
+        return this.notifyCoalDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyCoal(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyCoalDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyCoalDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_COAL, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyCoal(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyCoalDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyCoalDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_COAL, true, playerId);
+        return true;
+    }
+    
+    public boolean isNotifyQuartzDisabled(@NotNull final UUID playerId) {
+        return this.notifyQuartzDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyQuartz(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyQuartzDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyQuartzDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_QUARTZ, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyQuartz(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyQuartzDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyQuartzDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_QUARTZ, true, playerId);
+        return true;
+    }
+    
+    public boolean isNotifyDiamondDisabled(@NotNull final UUID playerId) {
+        return this.notifyDiamondDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyDiamond(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyDiamondDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyDiamondDisabled, this.disabledNotificationsFile,  CVRanksPlugin.DISABLE_NOTIFY_DIAMOND, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyDiamond(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyDiamondDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyDiamondDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_DIAMOND, true, playerId);
+        return true;
+    }
+    
+    public boolean isNotifyIronDisabled(@NotNull final UUID playerId) {
+        return this.notifyIronDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyIron(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyIronDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyIronDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_IRON, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyIron(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyIronDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyIronDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_IRON, true, playerId);
+        return true;
+    }
+    
+    public boolean isNotifyGoldDisabled(@NotNull final UUID playerId) {
+        return this.notifyGoldDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyGold(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyGoldDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyGoldDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_GOLD, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyGold(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyGoldDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyGoldDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_GOLD, true, playerId);
+        return true;
+    }
+    
+    public boolean isNotifyCopperDisabled(@NotNull final UUID playerId) {
+        return this.notifyCopperDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyCopper(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyCopperDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyCopperDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_COPPER, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyCopper(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyCopperDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyCopperDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_COPPER, true, playerId);
+        return true;
+    }
+    
+    private void saveUpdatedPlayers(@NotNull final Set<UUID> uniqueIds, @NotNull final File file, @NotNull final String key, final boolean enable, @NotNull final UUID playerId) throws RuntimeException {
+        
+        final List<String> rawUniqueIds = new ArrayList<String>();
+        for (final UUID uniqueId : uniqueIds) {
+            rawUniqueIds.add(uniqueId.toString());
+        }
+        
+        final YamlConfiguration config = this.loadConfig(file);
+        config.set(key, rawUniqueIds);
+        try {
+            this.saveConfig(file, config);
+        } catch (final RuntimeException e) {
+            
+            final StringBuilder builder = new StringBuilder();
+            builder.append("Unable to ");
+            builder.append(enable ? "remove" : "add");
+            builder.append(" UUID ").append(playerId.toString()).append(" ");
+            builder.append(enable ? "from" : "to");
+            builder.append(" ").append(key);
+            
+            throw new RuntimeException(builder.toString(), e);
+        }
+    }
     
     //////////////////////////////
     // PERK RESET NOTIFICATIONS //
