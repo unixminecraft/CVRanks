@@ -15,7 +15,7 @@ commands:
   # Service Chain Commands
   doctor:
     description: "Heal self or another player"
-    usage: "§cSyntax: /doc <list|me|[player]>"
+    usage: "§cSyntax: /doc <list|me|[player]|notify [on|off]>"
     aliases:
       - doc
       - dr
@@ -29,18 +29,24 @@ commands:
       - lvl
   
   repair:
-    description: "Repair a tool, at the expense of raw materials and enchantment levels"
+    description: "Repair a tool, at the expense of time"
     permission: cvranks.service.repairman
     permission-message: "§cYou do not have permission to execute this command."
     usage: "§cSyntax: /rp"
     aliases: rp
   
   # Mining Chain Commands
+  prospector:
+    description: "Obtain extra rare items from their ores"
+    usage: "§cSyntax: /ps notify [coal|quartz|diamond|all] [on|off]"
+    aliases:
+      - ps
+  
   instasmelt:
     description: "Instantly smelt iron/gold/copper when mining with a non-silk pickaxe"
     permission: cvranks.mining.instasmelt
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /smelt [on|off]"
+    usage: "§cSyntax: /smelt [on|off|notify [iron|gold|copper|all] [on|off]]"
     aliases:
       - smelt
   
@@ -115,6 +121,12 @@ commands:
     usage: "§cSyntax: /respawn [time]"
   
   # Other Non-Chain Commands
+  wood:
+    description: "Managing the bonus wood rank"
+    permission: cvranks.mining.ps.logs
+    permission-message: "§cYou do not have permission to execute this command."
+    usage: "§cSyntax: /wood notify [on|off]"
+  
   scuba:
     description: "Permanent underwater breathing"
     permission: cvranks.service.scuba

@@ -214,7 +214,7 @@ public final class CVRanksEventListener implements Listener {
             } else if (blockType == Material.GRAVEL && (dropType == Material.FLINT || dropType == Material.GRAVEL) && !processedGravel) {
                 
                 processedGravel = true;
-                if ((player.hasPermission("cvranks.mining.ps") || player.hasPermission("cvranks.mining.ps.ore")) && this.random.nextInt(100) < this.getNormalChance(toolType, "SHOVEL")) {
+                if ((player.hasPermission("cvranks.mining.ps") || player.hasPermission("cvranks.mining.ps.flint")) && this.random.nextInt(100) < this.getNormalChance(toolType, "SHOVEL")) {
                     addedDrop = true;
                     dropMessage = "§aYou found a piece of flint.";
                 }
@@ -562,7 +562,15 @@ public final class CVRanksEventListener implements Listener {
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(@NotNull final PlayerJoinEvent event) {
-        this.plugin.checkResetNotifications(event.getPlayer().getUniqueId());
+        
+        final UUID playerId = event.getPlayer().getUniqueId();
+        
+        this.plugin.checkDoctorResetNotification(playerId);
+        this.plugin.checkRepairResetNotification(playerId);
+        this.plugin.checkXpertResetNotification(playerId);
+        this.plugin.checkKeepsakeResetNotification(playerId);
+        this.plugin.checkDeathHoundResetNotification(playerId);
+        this.plugin.checkRespawnResetNotification(playerId);
     }
     
     /////////////////////////////

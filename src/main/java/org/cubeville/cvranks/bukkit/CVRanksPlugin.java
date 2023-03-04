@@ -63,14 +63,16 @@ public final class CVRanksPlugin extends JavaPlugin {
     public static final String ABILITY_READY_DEATH_HOUND = "§bYour death hound ability is ready to use again.";
     public static final String ABILITY_READY_RESPAWN = "§bYour respawn ability is ready to use again.";
     
-    private static final String DISABLE_NOTIFY_WOOD = "disable_notify_wood";
-    private static final String DISABLE_NOTIFY_FLINT = "disable_notify_flint";
+    private static final String DISABLE_NOTIFY_DOCTOR = "disable_notify_doctor";
     private static final String DISABLE_NOTIFY_COAL = "disable_notify_coal";
     private static final String DISABLE_NOTIFY_QUARTZ = "disable_notify_quartz";
     private static final String DISABLE_NOTIFY_DIAMOND = "disable_notify_diamond";
+    private static final String DISABLE_NOTIFY_FLINT = "disable_notify_flint";
     private static final String DISABLE_NOTIFY_IRON = "disable_notify_iron";
     private static final String DISABLE_NOTIFY_GOLD = "disable_notify_gold";
     private static final String DISABLE_NOTIFY_COPPER = "disable_notify_copper";
+    private static final String DISABLE_NOTIFY_DEATH_HOUND = "disable_notify_death_hound";
+    private static final String DISABLE_NOTIFY_WOOD = "disable_notify_wood";
     
     private static final String ACTIVE_INSTA_SMELT = "active_insta_smelt";
     private static final String ACTIVE_NIGHT_STALKER = "active_night_stalker";
@@ -102,30 +104,22 @@ public final class CVRanksPlugin extends JavaPlugin {
     private Map<UUID, Location> deathLocations;
     private Set<UUID> pendingDeathHoundNotifications;
     
-    /* PERK RESET NOTIFICATIONS */
+    /* SERVICE CHAIN */
+    private Map<UUID, Long> doctorLastUsed;
     private Set<UUID> notifyDoctorReset;
+    private Set<UUID> notifyDoctorDisabled;
+    private Map<UUID, Long> repairLastUsed;
     private Set<UUID> notifyRepairReset;
-    private Set<UUID> notifyXpertReset;
-    private Set<UUID> notifyKeepsakeReset;
-    private Set<UUID> notifyDeathHoundReset;
-    private Set<UUID> notifyRespawnReset;
     
-    /* BONUS BLOCKS NOTIFICATIONS */
-    private Set<UUID> notifyWoodDisabled;
-    private Set<UUID> notifyFlintDisabled;
+    /* MINING CHAIN */
     private Set<UUID> notifyCoalDisabled;
     private Set<UUID> notifyQuartzDisabled;
     private Set<UUID> notifyDiamondDisabled;
+    private Set<UUID> notifyFlintDisabled;
+    private Set<UUID> instaSmeltActive;
     private Set<UUID> notifyIronDisabled;
     private Set<UUID> notifyGoldDisabled;
     private Set<UUID> notifyCopperDisabled;
-    
-    /* SERVICE CHAIN */
-    private Map<UUID, Long> doctorLastUsed;
-    private Map<UUID, Long> repairLastUsed;
-    
-    /* MINING CHAIN */
-    private Set<UUID> instaSmeltActive;
     private Set<UUID> nightStalkerActive;
     
     /* BUILD CHAIN */
@@ -136,11 +130,17 @@ public final class CVRanksPlugin extends JavaPlugin {
     
     /* DEATH CHAIN */
     private Map<UUID, Long> xpertLastUsed;
+    private Set<UUID> notifyXpertReset;
     private Map<UUID, Long> keepsakeLastUsed;
+    private Set<UUID> notifyKeepsakeReset;
     private Map<UUID, Long> deathHoundLastUsed;
+    private Set<UUID> notifyDeathHoundReset;
+    private Set<UUID> notifyDeathHoundDisabled;
     private Map<UUID, Long> respawnLastUsed;
+    private Set<UUID> notifyRespawnReset;
     
     /* NON-CHAIN / OTHER */
+    private Set<UUID> notifyWoodDisabled;
     private Set<UUID> scubaActive;
     private Set<UUID> miniRankMyceliumActive;
     private Set<UUID> miniRankGlassActive;
@@ -172,30 +172,22 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.deathLocations = new ConcurrentHashMap<UUID, Location>();
         this.pendingDeathHoundNotifications = new HashSet<UUID>();
         
-        /* PERK RESET NOTIFICATIONS */
+        /* SERVICE CHAIN */
+        this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
         this.notifyDoctorReset = new HashSet<UUID>();
+        this.notifyDoctorDisabled = new HashSet<UUID>();
+        this.repairLastUsed = new ConcurrentHashMap<UUID, Long>();
         this.notifyRepairReset = new HashSet<UUID>();
-        this.notifyXpertReset = new HashSet<UUID>();
-        this.notifyKeepsakeReset = new HashSet<UUID>();
-        this.notifyDeathHoundReset = new HashSet<UUID>();
-        this.notifyRespawnReset = new HashSet<UUID>();
         
-        /* BONUS BLOCKS NOTIFICATIONS */
-        this.notifyWoodDisabled = new HashSet<UUID>();
-        this.notifyFlintDisabled = new HashSet<UUID>();
+        /* MINING CHAIN */
         this.notifyCoalDisabled = new HashSet<UUID>();
         this.notifyQuartzDisabled = new HashSet<UUID>();
         this.notifyDiamondDisabled = new HashSet<UUID>();
+        this.notifyFlintDisabled = new HashSet<UUID>();
+        this.instaSmeltActive = new HashSet<UUID>();
         this.notifyIronDisabled = new HashSet<UUID>();
         this.notifyGoldDisabled = new HashSet<UUID>();
         this.notifyCopperDisabled = new HashSet<UUID>();
-        
-        /* SERVICE CHAIN */
-        this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
-        this.repairLastUsed = new ConcurrentHashMap<UUID, Long>();
-        
-        /* MINING CHAIN */
-        this.instaSmeltActive = new HashSet<UUID>();
         this.nightStalkerActive = new HashSet<UUID>();
         
         /* BUILD CHAIN */
@@ -206,11 +198,17 @@ public final class CVRanksPlugin extends JavaPlugin {
         
         /* DEATH CHAIN */
         this.xpertLastUsed = new ConcurrentHashMap<UUID, Long>();
+        this.notifyXpertReset = new HashSet<UUID>();
         this.keepsakeLastUsed = new ConcurrentHashMap<UUID, Long>();
+        this.notifyKeepsakeReset = new HashSet<UUID>();
         this.deathHoundLastUsed = new ConcurrentHashMap<UUID, Long>();
+        this.notifyDeathHoundReset = new HashSet<UUID>();
+        this.notifyDeathHoundDisabled = new HashSet<UUID>();
         this.respawnLastUsed = new ConcurrentHashMap<UUID, Long>();
+        this.notifyRespawnReset = new HashSet<UUID>();
         
         /* NON-CHAIN / OTHER */
+        this.notifyWoodDisabled = new HashSet<UUID>();
         this.scubaActive = new HashSet<UUID>();
         this.miniRankMyceliumActive = new HashSet<UUID>();
         this.miniRankGlassActive = new HashSet<UUID>();
@@ -398,9 +396,11 @@ public final class CVRanksPlugin extends JavaPlugin {
         // COMMAND REGISTRATION //
         //////////////////////////
         
+        this.registerCommand("cvranks", new CVRanksCommand(this));
         this.registerCommand("doctor", new DoctorCommand(this));
         this.registerCommand("level", new LevelCommand(this));
         this.registerCommand("repair", new RepairCommand(this));
+        this.registerCommand("prospector", new ProspectorCommand(this));
         this.registerCommand("instasmelt", new InstaSmeltCommand(this));
         this.registerCommand("nightstalker", new NightStalkerCommand(this));
         this.registerCommand("stonemason", new StoneMasonCommand(this));
@@ -411,6 +411,7 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.registerCommand("keepsake", new KeepsakeCommand(this));
         this.registerCommand("deathhound", new DeathHoundCommand(this));
         this.registerCommand("respawn", new RespawnCommand(this));
+        this.registerCommand("wood", new WoodCommand(this));
         this.registerCommand("scuba", new ScubaCommand(this));
         this.registerCommand("minirank", new MiniRankCommand(this));
     
@@ -799,53 +800,87 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.pendingDeathHoundNotifications.remove(playerId);
     }
     
-    ///////////////////////////////
-    // BONUS BLOCK NOTIFICATIONS //
-    ///////////////////////////////
+    ///////////////////
+    // SERVICE CHAIN //
+    ///////////////////
     
-    public boolean isNotifyWoodDisabled(@NotNull final UUID playerId) {
-        return this.notifyWoodDisabled.contains(playerId);
-    }
-    
-    public boolean disableNotifyWood(@NotNull final UUID playerId) throws RuntimeException {
+    public long getDoctorWaitTime(@NotNull final UUID playerId) {
         
-        if (!this.notifyWoodDisabled.add(playerId)) {
-            return false;
+        if (!this.doctorLastUsed.containsKey(playerId)) {
+            return 0L;
         }
-        this.saveUpdatedPlayers(this.notifyWoodDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_WOOD, false, playerId);
-        return true;
-    }
-    
-    public boolean enableNotifyWood(@NotNull final UUID playerId) throws RuntimeException {
         
-        if (!this.notifyWoodDisabled.remove(playerId)) {
-            return false;
+        final Player player = this.server.getPlayer(playerId);
+        final long waitTime;
+        if (player != null && player.hasPermission("cvranks.service.dr.master")) {
+            waitTime = 12000L;
+        } else {
+            waitTime = 24000L;
         }
-        this.saveUpdatedPlayers(this.notifyWoodDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_WOOD, true, playerId);
-        return true;
-    }
-    
-    public boolean isNotifyFlintDisabled(@NotNull final UUID playerId) {
-        return this.notifyFlintDisabled.contains(playerId);
-    }
-    
-    public boolean disableNotifyFlint(@NotNull final UUID playerId) throws RuntimeException {
         
-        if (!this.notifyFlintDisabled.add(playerId)) {
-            return false;
-        }
-        this.saveUpdatedPlayers(this.notifyFlintDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_FLINT, false, playerId);
-        return true;
+        final long endTime = this.doctorLastUsed.get(playerId) + waitTime;
+        return Math.max(0L, endTime - this.uptime);
     }
     
-    public boolean enableNotifyFlint(@NotNull final UUID playerId) throws RuntimeException {
-        
-        if (!this.notifyFlintDisabled.remove(playerId)) {
-            return false;
-        }
-        this.saveUpdatedPlayers(this.notifyFlintDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_FLINT, true, playerId);
-        return true;
+    public void doctorUsed(@NotNull final UUID playerId) {
+        this.doctorLastUsed.put(playerId, this.uptime);
     }
+    
+    public void checkDoctorResetNotification(@NotNull final UUID playerId) {
+        
+        if (this.notifyDoctorReset.remove(playerId)) {
+            this.scheduler.runTaskLater(this, () -> {
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_DOCTOR);
+                } else {
+                    this.notifyDoctorReset.add(playerId);
+                }
+            }, 60L);
+        }
+    }
+    
+    public long getRepairWaitTime(@NotNull final UUID playerId) {
+        
+        if (!this.repairLastUsed.containsKey(playerId)) {
+            return 0L;
+        }
+        
+        final Player player = this.server.getPlayer(playerId);
+        final long waitTime;
+        if (player != null && player.hasPermission("cvranks.service.repairman.master")) {
+            waitTime = 36000L;
+        } else {
+            waitTime = 48000L;
+        }
+        
+        final long endTime = this.repairLastUsed.get(playerId) + waitTime;
+        return Math.max(0L, endTime - this.uptime);
+    }
+    
+    public void repairUsed(@NotNull final UUID playerId) {
+        this.repairLastUsed.put(playerId, this.uptime);
+    }
+    
+    public void checkRepairResetNotification(@NotNull final UUID playerId) {
+        
+        if (this.notifyRepairReset.remove(playerId)) {
+            this.scheduler.runTaskLater(this, () -> {
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_REPAIR);
+                } else {
+                    this.notifyRepairReset.add(playerId);
+                }
+            }, 60L);
+        }
+    }
+    
+    //////////////////
+    // MINING CHAIN //
+    //////////////////
     
     public boolean isNotifyCoalDisabled(@NotNull final UUID playerId) {
         return this.notifyCoalDisabled.contains(playerId);
@@ -913,6 +948,50 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    public boolean isNotifyFlintDisabled(@NotNull final UUID playerId) {
+        return this.notifyFlintDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyFlint(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyFlintDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyFlintDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_FLINT, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyFlint(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyFlintDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyFlintDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_FLINT, true, playerId);
+        return true;
+    }
+    
+    public boolean isInstaSmeltEnabled(@NotNull final UUID playerId) {
+        return this.instaSmeltActive.contains(playerId);
+    }
+    
+    public boolean enableInstaSmelt(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.instaSmeltActive.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.instaSmeltActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_INSTA_SMELT, true, playerId);
+        return true;
+    }
+    
+    public boolean disableInstaSmelt(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.instaSmeltActive.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.instaSmeltActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_INSTA_SMELT, false, playerId);
+        return true;
+    }
+    
     public boolean isNotifyIronDisabled(@NotNull final UUID playerId) {
         return this.notifyIronDisabled.contains(playerId);
     }
@@ -976,165 +1055,6 @@ public final class CVRanksPlugin extends JavaPlugin {
             return false;
         }
         this.saveUpdatedPlayers(this.notifyCopperDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_COPPER, true, playerId);
-        return true;
-    }
-    
-    //////////////////////////////
-    // PERK RESET NOTIFICATIONS //
-    //////////////////////////////
-    
-    public void checkResetNotifications(@NotNull final UUID playerId) {
-        
-        // Doctor
-        if (this.notifyDoctorReset.remove(playerId)) {
-            this.scheduler.runTaskLater(this, () -> {
-                
-                final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(CVRanksPlugin.ABILITY_READY_DOCTOR);
-                } else {
-                    this.notifyDoctorReset.add(playerId);
-                }
-            }, 60L);
-        }
-        
-        // Repair
-        if (this.notifyRepairReset.remove(playerId)) {
-            this.scheduler.runTaskLater(this, () -> {
-                
-                final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(CVRanksPlugin.ABILITY_READY_REPAIR);
-                } else {
-                    this.notifyRepairReset.add(playerId);
-                }
-            }, 60L);
-        }
-        
-        // Xpert
-        if (this.notifyXpertReset.remove(playerId)) {
-            this.scheduler.runTaskLater(this, () -> {
-                
-                final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(CVRanksPlugin.ABILITY_READY_XPERT);
-                } else {
-                    this.notifyXpertReset.add(playerId);
-                }
-            }, 60L);
-        }
-        
-        // Keepsake
-        if (this.notifyKeepsakeReset.remove(playerId)) {
-            this.scheduler.runTaskLater(this, () -> {
-                
-                final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(CVRanksPlugin.ABILITY_READY_KEEPSAKE);
-                } else {
-                    this.notifyKeepsakeReset.add(playerId);
-                }
-            }, 60L);
-        }
-        
-        // Death Hound
-        if (this.notifyDeathHoundReset.remove(playerId)) {
-            this.scheduler.runTaskLater(this, () -> {
-                
-                final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(CVRanksPlugin.ABILITY_READY_DEATH_HOUND);
-                } else {
-                    this.notifyDeathHoundReset.add(playerId);
-                }
-            }, 60L);
-        }
-        
-        // Respawn
-        if (this.notifyRespawnReset.remove(playerId)) {
-            this.scheduler.runTaskLater(this, () -> {
-                
-                final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(CVRanksPlugin.ABILITY_READY_RESPAWN);
-                } else {
-                    this.notifyRespawnReset.add(playerId);
-                }
-            }, 60L);
-        }
-    }
-    
-    ///////////////////
-    // SERVICE CHAIN //
-    ///////////////////
-    
-    public long getDoctorWaitTime(@NotNull final UUID playerId) {
-        
-        if (!this.doctorLastUsed.containsKey(playerId)) {
-            return 0L;
-        }
-        
-        final Player player = this.server.getPlayer(playerId);
-        final long waitTime;
-        if (player != null && player.hasPermission("cvranks.service.dr.master")) {
-            waitTime = 12000L;
-        } else {
-            waitTime = 24000L;
-        }
-        
-        final long endTime = this.doctorLastUsed.get(playerId) + waitTime;
-        return Math.max(0L, endTime - this.uptime);
-    }
-    
-    public void doctorUsed(@NotNull final UUID playerId) {
-        this.doctorLastUsed.put(playerId, this.uptime);
-    }
-    
-    public long getRepairWaitTime(@NotNull final UUID playerId) {
-        
-        if (!this.repairLastUsed.containsKey(playerId)) {
-            return 0L;
-        }
-        
-        final Player player = this.server.getPlayer(playerId);
-        final long waitTime;
-        if (player != null && player.hasPermission("cvranks.service.repairman.master")) {
-            waitTime = 36000L;
-        } else {
-            waitTime = 48000L;
-        }
-        
-        final long endTime = this.repairLastUsed.get(playerId) + waitTime;
-        return Math.max(0L, endTime - this.uptime);
-    }
-    
-    public void repairUsed(@NotNull final UUID playerId) {
-        this.repairLastUsed.put(playerId, this.uptime);
-    }
-    
-    //////////////////
-    // MINING CHAIN //
-    //////////////////
-    
-    public boolean isInstaSmeltEnabled(@NotNull final UUID playerId) {
-        return this.instaSmeltActive.contains(playerId);
-    }
-    
-    public boolean enableInstaSmelt(@NotNull final UUID playerId) throws RuntimeException {
-        
-        if (!this.instaSmeltActive.add(playerId)) {
-            return false;
-        }
-        this.saveUpdatedPlayers(this.instaSmeltActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_INSTA_SMELT, true, playerId);
-        return true;
-    }
-    
-    public boolean disableInstaSmelt(@NotNull final UUID playerId) throws RuntimeException {
-        
-        if (!this.instaSmeltActive.remove(playerId)) {
-            return false;
-        }
-        this.saveUpdatedPlayers(this.instaSmeltActive, this.activeRanksFile, CVRanksPlugin.ACTIVE_INSTA_SMELT, false, playerId);
         return true;
     }
     
@@ -1270,6 +1190,21 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.xpertLastUsed.put(playerId, this.uptime);
     }
     
+    public void checkXpertResetNotification(@NotNull final UUID playerId) {
+        
+        if (this.notifyXpertReset.remove(playerId)) {
+            this.scheduler.runTaskLater(this, () -> {
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_XPERT);
+                } else {
+                    this.notifyXpertReset.add(playerId);
+                }
+            }, 60L);
+        }
+    }
+    
     public long getKeepsakeWaitTime(@NotNull final UUID playerId) {
         
         if (!this.keepsakeLastUsed.containsKey(playerId)) {
@@ -1282,6 +1217,21 @@ public final class CVRanksPlugin extends JavaPlugin {
     
     public void keepsakeUsed(@NotNull final UUID playerId) {
         this.keepsakeLastUsed.put(playerId, this.uptime);
+    }
+    
+    public void checkKeepsakeResetNotification(@NotNull final UUID playerId) {
+        
+        if (this.notifyKeepsakeReset.remove(playerId)) {
+            this.scheduler.runTaskLater(this, () -> {
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_KEEPSAKE);
+                } else {
+                    this.notifyKeepsakeReset.add(playerId);
+                }
+            }, 60L);
+        }
     }
     
     public long getDeathHoundWaitTime(@NotNull final UUID playerId) {
@@ -1298,6 +1248,21 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.deathHoundLastUsed.put(playerId, this.uptime);
     }
     
+    public void checkDeathHoundResetNotification(@NotNull final UUID playerId) {
+        
+        if (this.notifyDeathHoundReset.remove(playerId)) {
+            this.scheduler.runTaskLater(this, () -> {
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_DEATH_HOUND);
+                } else {
+                    this.notifyDeathHoundReset.add(playerId);
+                }
+            }, 60L);
+        }
+    }
+    
     public long getRespawnWaitTime(@NotNull final UUID playerId) {
     
         if (!this.respawnLastUsed.containsKey(playerId)) {
@@ -1312,9 +1277,46 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.respawnLastUsed.put(playerId, this.uptime);
     }
     
+    public void checkRespawnResetNotification(@NotNull final UUID playerId) {
+        
+        if (this.notifyRespawnReset.remove(playerId)) {
+            this.scheduler.runTaskLater(this, () -> {
+                
+                final Player player = this.server.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(CVRanksPlugin.ABILITY_READY_RESPAWN);
+                } else {
+                    this.notifyRespawnReset.add(playerId);
+                }
+            }, 60L);
+        }
+    }
+    
     ///////////////////////
     // NON-CHAIN / OTHER //
     ///////////////////////
+    
+    public boolean isNotifyWoodDisabled(@NotNull final UUID playerId) {
+        return this.notifyWoodDisabled.contains(playerId);
+    }
+    
+    public boolean disableNotifyWood(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyWoodDisabled.add(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyWoodDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_WOOD, false, playerId);
+        return true;
+    }
+    
+    public boolean enableNotifyWood(@NotNull final UUID playerId) throws RuntimeException {
+        
+        if (!this.notifyWoodDisabled.remove(playerId)) {
+            return false;
+        }
+        this.saveUpdatedPlayers(this.notifyWoodDisabled, this.disabledNotificationsFile, CVRanksPlugin.DISABLE_NOTIFY_WOOD, true, playerId);
+        return true;
+    }
     
     public boolean isScubaEnabled(@NotNull final UUID playerId) {
         return this.scubaActive.contains(playerId);
