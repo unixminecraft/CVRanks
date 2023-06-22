@@ -253,3 +253,10 @@ SOUL_SPEED:
   names:
   - "Soul Speed"
   - "soulspeed"
+SWIFT_SNEAK:
+  base-cost: 13
+  level-modifier: 200
+  max-level: 4
+  names:
+  - "Swift Sneak"
+  - "swiftsneak"

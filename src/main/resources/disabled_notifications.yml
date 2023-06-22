@@ -1,1 +1,12 @@
-
+disable_notify_doctor:
+disable_notify_coal:
+disable_notify_quartz:
+disable_notify_diamond:
+disable_notify_flint:
+disable_notify_iron:
+disable_notify_gold:
+disable_notify_copper:
+disable_notify_death_hound:
+disable_notify_respawn:
+disable_notify_wood:
+disable_notify_leather:

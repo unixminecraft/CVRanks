@@ -1,55 +1,71 @@
-package org.cubeville.cvranks.bukkit.command.death;
+package org.cubeville.ranks.bukkit.command.death;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
-import org.cubeville.cvranks.bukkit.CVRanksPlugin;
+import org.cubeville.ranks.bukkit.CVRanksPlugin;
+import org.cubeville.ranks.bukkit.command.PlayerCommand;
 import org.jetbrains.annotations.NotNull;
 
-public final class DeathHoundCommand implements TabExecutor {
+public final class DeathHoundCommand extends PlayerCommand {
     
     private final CVRanksPlugin plugin;
+    private final Set<String> toggles;
     
     public DeathHoundCommand(@NotNull final CVRanksPlugin plugin) {
+        super("death hound");
+        
         this.plugin = plugin;
+        this.toggles = new HashSet<String>(Arrays.asList("on", "off"));
     }
     
     @Override
-    public boolean onCommand(@NotNull final CommandSender commandSender, @NotNull final Command command, @NotNull final String label, @NotNull final String[] args) {
+    protected boolean execute(@NotNull final Player sender, @NotNull final List<String> args) {
         
-        if (!(commandSender instanceof Player)) {
-            commandSender.sendMessage("§cThe death hound command can only be used by a player.");
-            return true;
-        }
-        if (args.length > 1) {
-            return false;
-        }
+        final boolean hasDH = sender.hasPermission("cvranks.death.hound");
         
-        final Player sender = (Player) commandSender;
-        if (args.length == 0) {
+        final UUID senderId = sender.getUniqueId();
+        
+        if (args.isEmpty()) {
+            
             sender.sendMessage("§8--------------------------------");
+            if (hasDH) {
+                final long waitTime = this.plugin.getDeathHoundWaitTime(senderId);
+                sender.sendMessage("§bRank Wait Times:");
+                sender.sendMessage("§8--------------------------------");
+                if (waitTime > 0L) {
+                    sender.sendMessage("§fDeath Hound:");
+                    sender.sendMessage(" §f- In-game:§r §c" + this.plugin.formatWaitTime(waitTime));
+                    sender.sendMessage(" §f- Real-Time:§r §c" + this.plugin.formatRealWaitTime(waitTime));
+                } else {
+                    sender.sendMessage("§fDeath Hound:§r §aREADY");
+                }
+                sender.sendMessage("§8--------------------------------");
+                sender.sendMessage("§bRank Notification Statuses:");
+                sender.sendMessage("§8--------------------------------");
+                sender.sendMessage(" §f- Death Hound:§r " + (this.plugin.isNotifyDeathHoundDisabled(senderId) ? "§cDisabled" : "§aEnabled"));
+                sender.sendMessage("§8--------------------------------");
+            }
             sender.sendMessage("§bAvailable Death Hound commands:");
             sender.sendMessage("§8--------------------------------");
             sender.sendMessage(" §f-§r §a/dh list");
-            if (sender.hasPermission("cvranks.death.hound")) {
+            if (hasDH) {
                 sender.sendMessage(" §f-§r §a/dh time");
                 sender.sendMessage(" §f-§r §a/dh me");
                 sender.sendMessage(" §f-§r §a/dh <player>");
+                sender.sendMessage(" §f-§r §a/dh notify [" + (this.plugin.isNotifyDeathHoundDisabled(senderId) ? "on" : "off") + "]");
             }
             sender.sendMessage("§8--------------------------------");
-            
             return true;
         }
         
-        final String subCommand = args[0];
+        final String subCommand = args.remove(0);
         if (subCommand.equalsIgnoreCase("list")) {
             
             final List<String> messages = new ArrayList<String>();
@@ -84,26 +100,59 @@ public final class DeathHoundCommand implements TabExecutor {
             return true;
         }
         
-        if (!sender.hasPermission("cvranks.death.hound")) {
-            sender.sendMessage(CVRanksPlugin.DEFAULT_PERMISSION_MESSAGE);
+        if (!hasDH) {
+            sender.sendMessage(DEFAULT_PERMISSION_MESSAGE);
             return true;
         }
         
-        final UUID senderId = sender.getUniqueId();
-        final long waitTime = this.plugin.getDeathHoundWaitTime(senderId);
+        if (subCommand.equalsIgnoreCase("notify")) {
+            
+            if (args.isEmpty()) {
+                
+                sender.sendMessage("§8--------------------------------");
+                sender.sendMessage("§bRank Notification Statuses:");
+                sender.sendMessage("§8--------------------------------");
+                sender.sendMessage(" §f- Death Hound:§r " + (this.plugin.isNotifyDeathHoundDisabled(senderId) ? "§cDisabled" : "§aEnabled"));
+                sender.sendMessage("§8--------------------------------");
+                return true;
+            }
+            
+            final String toggle = args.remove(0);
+            if (!args.isEmpty() || !this.toggles.contains(toggle.toLowerCase())) {
+                sender.sendMessage("§cSyntax: /dh <list|time|me|[player]|notify [on|off]>");
+                return true;
+            }
+            
+            final boolean changed = toggle.equalsIgnoreCase("on") ? this.plugin.enableNotifyDeathHound(senderId) : this.plugin.disableNotifyDeathHound(senderId);
+            
+            sender.sendMessage("§8--------------------------------");
+            sender.sendMessage("§bRank Notification Statuses:");
+            sender.sendMessage("§8--------------------------------");
+            sender.sendMessage(" §f- Death Hound:§r " + (this.plugin.isNotifyDeathHoundDisabled(senderId) ? "§cDisabled" : "§aEnabled") + "§r " + (changed ? "§a(Changed)" : "§c(Not Changed)"));
+            sender.sendMessage("§8--------------------------------");
+            return true;
+        }
         
+        final long waitTime = this.plugin.getDeathHoundWaitTime(senderId);
         if (waitTime > 0L) {
             
-            final StringBuilder builder = new StringBuilder();
-            builder.append("§cYou must wait§r §6").append(this.plugin.formatWaitTime(waitTime)).append("§r §cin-game");
-            builder.append("§r §b(").append(this.plugin.formatRealTimeWait(waitTime)).append(" in real-time)");
-            builder.append("§r §cto use your death hound ability.");
-            sender.sendMessage(builder.toString());
+            sender.sendMessage("§8--------------------------------");
+            sender.sendMessage("§bRank Wait Times:");
+            sender.sendMessage("§8--------------------------------");
+            sender.sendMessage("§fDeath Hound:");
+            sender.sendMessage(" §f- In-game:§r §c" + this.plugin.formatWaitTime(waitTime));
+            sender.sendMessage(" §f- Real-Time:§r §c" + this.plugin.formatRealWaitTime(waitTime));
+            sender.sendMessage("§8--------------------------------");
             return true;
         }
         
         if (subCommand.equalsIgnoreCase("time")) {
-            sender.sendMessage(CVRanksPlugin.ABILITY_READY_DEATH_HOUND);
+            
+            sender.sendMessage("§8--------------------------------");
+            sender.sendMessage("§bRank Wait Times:");
+            sender.sendMessage("§8--------------------------------");
+            sender.sendMessage("§fDeath Hound:§r §aREADY");
+            sender.sendMessage("§8--------------------------------");
             return true;
         }
         
@@ -172,7 +221,7 @@ public final class DeathHoundCommand implements TabExecutor {
         for (final Player player : this.plugin.getServer().getOnlinePlayers()) {
             
             final UUID playerId = player.getUniqueId();
-            if (!player.hasPermission("cvranks.death.hound") || player.hasPermission("cvranks.death.hound.notifyoptout") || playerId.equals(senderId) || playerId.equals(targetId) || !player.canSee(target)) {
+            if (!player.hasPermission("cvranks.death.hound") || this.plugin.isNotifyDeathHoundDisabled(playerId) || playerId.equals(senderId) || playerId.equals(targetId) || !player.canSee(target)) {
                 continue;
             }
             
@@ -194,27 +243,52 @@ public final class DeathHoundCommand implements TabExecutor {
     
     @Override
     @NotNull
-    public List<String> onTabComplete(@NotNull final CommandSender commandSender, @NotNull final Command command, @NotNull final String label, @NotNull final String[] args) {
+    protected List<String> tabComplete(@NotNull final Player sender, @NotNull final List<String> args) {
         
-        if (!(commandSender instanceof Player)) {
+        final UUID senderId = sender.getUniqueId();
+        final List<String> completions = new ArrayList<String>();
+        completions.add("list");
+        
+        if (!sender.hasPermission("cvranks.death.hound")) {
+            
+            if (args.isEmpty()) {
+                return completions;
+            }
+            
+            final String subCommand = args.remove(0);
+            if (args.isEmpty()) {
+                completions.removeIf(completion -> !completion.toLowerCase().startsWith(subCommand.toLowerCase()));
+                return completions;
+            }
+            
             return Collections.emptyList();
         }
         
-        final Player sender = (Player) commandSender;
-        final List<String> completions = new ArrayList<String>();
-        final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
-        
-        completions.add("list");
-        if (!sender.hasPermission("cvranks.death.hound") || this.plugin.getDeathHoundWaitTime(sender.getUniqueId()) > 0L) {
+        completions.add("notify");
+        if (this.plugin.getDeathHoundWaitTime(senderId) > 0L) {
             
-            if (!argsIterator.hasNext()) {
-                return Collections.unmodifiableList(completions);
+            if (args.isEmpty()) {
+                return completions;
             }
             
-            final String subCommand = argsIterator.next();
-            if (!argsIterator.hasNext()) {
+            final String subCommand = args.remove(0);
+            if (args.isEmpty()) {
                 completions.removeIf(completion -> !completion.toLowerCase().startsWith(subCommand.toLowerCase()));
-                return Collections.unmodifiableList(completions);
+                return completions;
+            }
+            
+            completions.clear();
+            if (subCommand.equalsIgnoreCase("notify")) {
+                
+                completions.add(this.plugin.isNotifyDeathHoundDisabled(senderId) ? "on" : "off");
+                
+                final String toggle = args.remove(0);
+                if (args.isEmpty()) {
+                    completions.removeIf(completion -> !completion.toLowerCase().startsWith(toggle.toLowerCase()));
+                    return completions;
+                }
+                
+                return Collections.emptyList();
             }
             
             return Collections.emptyList();
@@ -236,14 +310,28 @@ public final class DeathHoundCommand implements TabExecutor {
             completions.add(player.getName());
         }
         
-        if (!argsIterator.hasNext()) {
-            return Collections.unmodifiableList(completions);
+        if (args.isEmpty()) {
+            return completions;
         }
         
-        final String subCommand = argsIterator.next();
-        if (!argsIterator.hasNext()) {
+        final String subCommand = args.remove(0);
+        if (args.isEmpty()) {
             completions.removeIf(completion -> !completion.toLowerCase().startsWith(subCommand.toLowerCase()));
-            return Collections.unmodifiableList(completions);
+            return completions;
+        }
+        
+        completions.clear();
+        if (subCommand.equalsIgnoreCase("notify")) {
+            
+            completions.add(this.plugin.isNotifyDeathHoundDisabled(senderId) ? "on" : "off");
+            
+            final String toggle = args.remove(0);
+            if (args.isEmpty()) {
+                completions.removeIf(completion -> !completion.toLowerCase().startsWith(toggle.toLowerCase()));
+                return completions;
+            }
+            
+            return Collections.emptyList();
         }
         
         return Collections.emptyList();

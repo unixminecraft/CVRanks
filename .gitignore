@@ -3,3 +3,4 @@
 .classpath
 /*.iml
 /target/
+.mvn/wrapper/maven-wrapper.jar

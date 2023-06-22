@@ -1,4 +1,4 @@
-package org.cubeville.cvranks.bukkit.listener;
+package org.cubeville.ranks.bukkit.listener;
 
 import java.util.Iterator;
 import java.util.Random;
@@ -23,7 +23,7 @@ import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
-import org.cubeville.cvranks.bukkit.CVRanksPlugin;
+import org.cubeville.ranks.bukkit.CVRanksPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public final class CVRanksEventListener implements Listener {
@@ -139,12 +139,15 @@ public final class CVRanksEventListener implements Listener {
             // The attempt to drop an extra piece will only occur 1 time per event call (per block break)
             
             final Player player = event.getPlayer();
+            final UUID playerId = player.getUniqueId();
             final Material toolType = player.getInventory().getItemInMainHand().getType();
             
             if (player.hasPermission("cvranks.mining.ps.logs") && this.random.nextInt(100) < this.getNormalChance(toolType, "AXE")) {
                 final ItemStack drop = item.getItemStack();
                 drop.setAmount(drop.getAmount() + 1);
-                player.sendMessage("§aYou found an extra piece of wood.");
+                if (!this.plugin.isNotifyWoodDisabled(playerId)) {
+                    player.sendMessage("§aYou found an extra piece of wood.");
+                }
             }
             
             break;
@@ -160,6 +163,7 @@ public final class CVRanksEventListener implements Listener {
     private void onBlockDropItemOreNormal(@NotNull final BlockDropItemEvent event) {
         
         final Player player = event.getPlayer();
+        final UUID playerId = player.getUniqueId();
         final ItemStack tool = player.getInventory().getItemInMainHand();
         final Material toolType = tool.getType();
         
@@ -183,6 +187,7 @@ public final class CVRanksEventListener implements Listener {
             
             boolean addedDrop = false;
             String dropMessage = "";
+            boolean messageDisabled = false;
             
             if ((blockType == Material.DIAMOND_ORE || blockType == Material.DEEPSLATE_DIAMOND_ORE) && dropType == Material.DIAMOND && !processedDiamond) {
                 
@@ -190,6 +195,7 @@ public final class CVRanksEventListener implements Listener {
                 if ((player.hasPermission("cvranks.mining.ps") || player.hasPermission("cvranks.mining.ps.ore")) && this.random.nextInt(100) < this.getDiamondChance(toolType)) {
                     addedDrop = true;
                     dropMessage = "§aYou found an extra diamond.";
+                    messageDisabled = this.plugin.isNotifyDiamondDisabled(playerId);
                 }
                 
             } else if ((blockType == Material.COAL_ORE || blockType == Material.DEEPSLATE_COAL_ORE) && dropType == Material.COAL && !processedCoal) {
@@ -198,9 +204,11 @@ public final class CVRanksEventListener implements Listener {
                 if ((player.hasPermission("cvranks.mining.ps") || player.hasPermission("cvranks.mining.ps.ore")) && this.random.nextInt(100) < this.getNormalChance(toolType, "PICKAXE")) {
                     addedDrop = true;
                     dropMessage = "§aYou found an extra piece of coal.";
+                    messageDisabled = this.plugin.isNotifyCoalDisabled(playerId);
                 }
                 if (player.hasPermission("cvranks.mining.mp") && this.random.nextInt(100) < 2) {
                     addBonusDiamond = true;
+                    messageDisabled = this.plugin.isNotifyCoalDisabled(playerId);
                 }
                 
             } else if (blockType == Material.NETHER_QUARTZ_ORE && dropType == Material.QUARTZ && !processedQuartz) {
@@ -209,6 +217,7 @@ public final class CVRanksEventListener implements Listener {
                 if ((player.hasPermission("cvranks.mining.ps") || player.hasPermission("cvranks.mining.ps.ore")) && this.random.nextInt(100) < this.getNormalChance(toolType, "PICKAXE")) {
                     addedDrop = true;
                     dropMessage = "§aYou found an extra piece of quartz.";
+                    messageDisabled = this.plugin.isNotifyQuartzDisabled(playerId);
                 }
                 
             } else if (blockType == Material.GRAVEL && (dropType == Material.FLINT || dropType == Material.GRAVEL) && !processedGravel) {
@@ -217,6 +226,7 @@ public final class CVRanksEventListener implements Listener {
                 if ((player.hasPermission("cvranks.mining.ps") || player.hasPermission("cvranks.mining.ps.flint")) && this.random.nextInt(100) < this.getNormalChance(toolType, "SHOVEL")) {
                     addedDrop = true;
                     dropMessage = "§aYou found a piece of flint.";
+                    messageDisabled = this.plugin.isNotifyFlintDisabled(playerId);
                 }
                 
             } else {
@@ -225,7 +235,9 @@ public final class CVRanksEventListener implements Listener {
             
             if (addedDrop) {
                 
-                player.sendMessage(dropMessage);
+                if (!messageDisabled) {
+                    player.sendMessage(dropMessage);
+                }
                 
                 if (blockType == Material.GRAVEL) {
                     // Gotta specifically drop flint, can't just add 1, otherwise it may drop extra gravel
@@ -243,7 +255,9 @@ public final class CVRanksEventListener implements Listener {
             final World world = blockState.getWorld();
             final Location location = blockState.getLocation();
             this.plugin.getServer().getScheduler().runTaskLater(this.plugin, () -> {
-                player.sendMessage("§aYou found a diamond.");
+                if (!this.plugin.isNotifyCoalDisabled(playerId)) {
+                    player.sendMessage("§aYou found a diamond.");
+                }
                 world.dropItemNaturally(location, new ItemStack(Material.DIAMOND));
             }, 1L);
         }
@@ -283,6 +297,7 @@ public final class CVRanksEventListener implements Listener {
             final Material dropType = drop.getType();
             
             boolean addedDrop = false;
+            boolean messageDisabled = false;
             final Material newDropType;
             final String newDropName;
             
@@ -290,6 +305,7 @@ public final class CVRanksEventListener implements Listener {
                 
                 if (player.hasPermission("cvranks.mining.mp") && this.random.nextInt(100) < 15 && !processedIron) {
                     addedDrop = true;
+                    messageDisabled = this.plugin.isNotifyIronDisabled(playerId);
                 }
                 
                 processedIron = true;
@@ -300,6 +316,7 @@ public final class CVRanksEventListener implements Listener {
                 
                 if (player.hasPermission("cvranks.mining.mp") && this.random.nextInt(100) < 15 && !processedGold) {
                     addedDrop = true;
+                    messageDisabled = this.plugin.isNotifyGoldDisabled(playerId);
                 }
                 
                 processedGold = true;
@@ -310,6 +327,7 @@ public final class CVRanksEventListener implements Listener {
                 
                 if (player.hasPermission("cvranks.mining.mp") && this.random.nextInt(100) < 15 && !processedCopper) {
                     addedDrop = true;
+                    messageDisabled = this.plugin.isNotifyCopperDisabled(playerId);
                 }
                 
                 processedCopper = true;
@@ -321,7 +339,9 @@ public final class CVRanksEventListener implements Listener {
             }
             
             if (addedDrop) {
-                player.sendMessage("§aYou found an extra " + newDropName + ".");
+                if (!messageDisabled) {
+                    player.sendMessage("§aYou found an extra " + newDropName + ".");
+                }
                 drop.setAmount(drop.getAmount() + 1);
             }
             
@@ -489,7 +509,9 @@ public final class CVRanksEventListener implements Listener {
         }
         
         entity.getWorld().dropItemNaturally(entity.getLocation(), new ItemStack(Material.LEATHER));
-        killer.sendMessage("§aYou got an extra piece of leather.");
+        if (!this.plugin.isNotifyLeatherDisabled(killer.getUniqueId())) {
+            killer.sendMessage("§aYou got an extra piece of leather.");
+        }
     }
     
     ////////////////////////////////////

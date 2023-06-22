@@ -1,59 +1,37 @@
-package org.cubeville.cvranks.bukkit.command.service;
+package org.cubeville.ranks.bukkit.command.service;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.cubeville.cvranks.bukkit.CVRanksPlugin;
+import org.cubeville.ranks.bukkit.CVRanksPlugin;
+import org.cubeville.ranks.bukkit.ExtendedEnchantment;
+import org.cubeville.ranks.bukkit.command.PlayerCommand;
 import org.jetbrains.annotations.NotNull;
 
-public final class LevelCommand implements TabExecutor {
+public final class LevelCommand extends PlayerCommand {
     
-    /////////////////////////
-    // LEVEL COMMAND LOGIC //
-    /////////////////////////
+    private final CVRanksPlugin plugin;
     
-    private final Map<Enchantment, ExtendedEnchantment> byEnchantment;
-    private final Map<String, ExtendedEnchantment> byName;
-    
-    public LevelCommand(@NotNull final CVRanksPlugin plugin) throws IllegalArgumentException {
+    public LevelCommand(@NotNull final CVRanksPlugin plugin) {
+        super("level");
         
-        
+        this.plugin = plugin;
     }
     
     @Override
-    public boolean onCommand(@NotNull final CommandSender commandSender, @NotNull final Command command, @NotNull final String label, @NotNull final String[] args) {
+    public boolean execute(@NotNull final Player sender, @NotNull final List<String> args) {
         
-        if (!(commandSender instanceof Player)) {
-            commandSender.sendMessage("§cThe level command can only be used by a player.");
+        if (args.isEmpty()) {
+            sender.sendMessage("§cSyntax: /level <cost|[enchantment]>");
             return true;
         }
         
-        final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
-        if (!argsIterator.hasNext()) {
-            return false;
-        }
-        
-        final Player sender = (Player) commandSender;
         final ItemStack item = sender.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
             sender.sendMessage("§cPlease hold the item you want to level up in your main hand.");
@@ -72,22 +50,23 @@ public final class LevelCommand implements TabExecutor {
         }
         
         final Map<Enchantment, Integer> enchantments = meta.getEnchants();
-        final String subCommand = argsIterator.next();
+        final String subCommand = args.remove(0);
         if (subCommand.equalsIgnoreCase("cost")) {
             
-            if (argsIterator.hasNext()) {
-                return false;
+            if (!args.isEmpty()) {
+                sender.sendMessage("§cSyntax: /level <cost|[enchantment]>");
+                return true;
             }
             
             for (final Map.Entry<Enchantment, Integer> enchantment : enchantments.entrySet()) {
                 
-                final ExtendedEnchantment extendedEnchantment = this.byEnchantment.get(enchantment.getKey());
+                final ExtendedEnchantment extendedEnchantment = this.plugin.getExtendedEnchantment(enchantment.getKey());
                 if (extendedEnchantment == null) {
                     continue;
                 }
                 
                 final StringBuilder builder = new StringBuilder();
-                builder.append("§a").append(extendedEnchantment.names.get(0)).append("§r §f-§r ");
+                builder.append("§a").append(extendedEnchantment.getNames().get(0)).append("§r §f-§r ");
                 
                 final int cost = this.getCost(extendedEnchantment, enchantment.getValue(), sender);
                 if (cost == -1) {
@@ -104,18 +83,18 @@ public final class LevelCommand implements TabExecutor {
         
         final StringBuilder enchantmentNameBuilder = new StringBuilder();
         enchantmentNameBuilder.append(subCommand);
-        while (argsIterator.hasNext()) {
-            enchantmentNameBuilder.append(" ").append(argsIterator.next());
+        while (!args.isEmpty()) {
+            enchantmentNameBuilder.append(" ").append(args.remove(0));
         }
         
         final String enchantmentName = enchantmentNameBuilder.toString();
-        final ExtendedEnchantment extendedEnchantment = this.byName.get(enchantmentName);
+        final ExtendedEnchantment extendedEnchantment = this.plugin.getExtendedEnchantment(enchantmentName);
         if (extendedEnchantment == null) {
             sender.sendMessage("§6" + enchantmentName + "§r §cis not a valid enchantment.");
             return true;
         }
         
-        final Enchantment enchantment = extendedEnchantment.enchantment;
+        final Enchantment enchantment = extendedEnchantment.getEnchantment();
         if (!enchantments.containsKey(enchantment)) {
             sender.sendMessage("§cYour item does not have the§r §6" + enchantmentName + "§r §cenchantment.");
             return true;
@@ -149,13 +128,8 @@ public final class LevelCommand implements TabExecutor {
     
     @Override
     @NotNull
-    public List<String> onTabComplete(@NotNull final CommandSender commandSender, @NotNull final Command command, @NotNull final String label, @NotNull final String[] args) {
+    public List<String> tabComplete(@NotNull final Player sender, @NotNull final List<String> args) {
         
-        if (!(commandSender instanceof Player)) {
-            return Collections.emptyList();
-        }
-        
-        final Player sender = (Player) commandSender;
         final ItemStack item = sender.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
             return Collections.emptyList();
@@ -171,44 +145,43 @@ public final class LevelCommand implements TabExecutor {
         }
         
         final List<String> completions = new ArrayList<String>();
-        final Iterator<String> argsIterator = new ArrayList<String>(Arrays.asList(args)).iterator();
         final Map<Enchantment, Integer> enchantments = meta.getEnchants();
         for (final Map.Entry<Enchantment, Integer> enchantment : enchantments.entrySet()) {
             
-            final ExtendedEnchantment extendedEnchantment = this.byEnchantment.get(enchantment.getKey());
-            if (extendedEnchantment == null || extendedEnchantment.maxLevel <= enchantment.getValue()) {
+            final ExtendedEnchantment extendedEnchantment = this.plugin.getExtendedEnchantment(enchantment.getKey());
+            if (extendedEnchantment == null || extendedEnchantment.getMaxLevel() <= enchantment.getValue()) {
                 continue;
             }
             
-            completions.add(extendedEnchantment.enchantment.getKey().getKey());
-            completions.addAll(extendedEnchantment.names);
+            completions.add(extendedEnchantment.getEnchantment().getKey().getKey());
+            completions.addAll(extendedEnchantment.getNames());
         }
         
         completions.add("cost");
         
-        if (!argsIterator.hasNext()) {
+        if (args.isEmpty()) {
             return Collections.unmodifiableList(completions);
         }
         
-        final StringBuilder subCommandBuilder = new StringBuilder();
-        subCommandBuilder.append(argsIterator.next());
-        while (argsIterator.hasNext()) {
-            subCommandBuilder.append(" ").append(argsIterator.next());
+        final StringBuilder builder = new StringBuilder();
+        builder.append(args.remove(0));
+        while (!args.isEmpty()) {
+            builder.append(" ").append(args.remove(0));
         }
         
-        final String subCommand = subCommandBuilder.toString();
+        final String subCommand = builder.toString();
         completions.removeIf(completion -> !completion.toLowerCase().startsWith(subCommand.toLowerCase()));
         return Collections.unmodifiableList(completions);
     }
     
     private int getCost(@NotNull final ExtendedEnchantment extendedEnchantment, final int currentLevel, @NotNull final Player sender) {
         
-        if (currentLevel >= extendedEnchantment.maxLevel) {
+        if (currentLevel >= extendedEnchantment.getMaxLevel()) {
             return -1;
         }
         
-        double cost = extendedEnchantment.baseCost;
-        final double modifier = (double) extendedEnchantment.levelModifier / 100.0D;
+        double cost = extendedEnchantment.getBaseCost();
+        final double modifier = (double) extendedEnchantment.getLevelModifier() / 100.0D;
         cost *= Math.pow(modifier, currentLevel - 1);
         
         if (sender.hasPermission("cvranks.service.repairman.master")) {

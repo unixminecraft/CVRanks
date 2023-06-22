@@ -1,4 +1,4 @@
-package org.cubeville.cvranks.bukkit;
+package org.cubeville.ranks.bukkit;
 
 import java.util.Collections;
 import java.util.List;

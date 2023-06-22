@@ -1,8 +1,8 @@
-main: org.cubeville.cvranks.bukkit.CVRanksPlugin
+main: org.cubeville.ranks.bukkit.CVRanksPlugin
 name: CVRanks
-version: 1.18.2
+version: 1.20.1
 description: "A plugin to add extra in-game perks and abilities to enhance the game"
-api-version: 1.18
+api-version: '1.20'
 authors:
   - FrediW
   - RandomRob13
@@ -15,7 +15,6 @@ commands:
   # Service Chain Commands
   doctor:
     description: "Heal self or another player"
-    usage: "§cSyntax: /doc <list|me|[player]|notify [on|off]>"
     aliases:
       - doc
       - dr
@@ -24,7 +23,6 @@ commands:
     description: "Level an enchantment up to and past the vanilla limits (restrictions apply)"
     permission: cvranks.service.repairman
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /level <cost|[enchantment]>"
     aliases:
       - lvl
   
@@ -32,13 +30,12 @@ commands:
     description: "Repair a tool, at the expense of time"
     permission: cvranks.service.repairman
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /rp"
-    aliases: rp
+    aliases:
+      - rp
   
   # Mining Chain Commands
   prospector:
     description: "Obtain extra rare items from their ores"
-    usage: "§cSyntax: /ps notify [coal|quartz|diamond|all] [on|off]"
     aliases:
       - ps
   
@@ -46,7 +43,6 @@ commands:
     description: "Instantly smelt iron/gold/copper when mining with a non-silk pickaxe"
     permission: cvranks.mining.instasmelt
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /smelt [on|off|notify [iron|gold|copper|all] [on|off]]"
     aliases:
       - smelt
   
@@ -54,7 +50,6 @@ commands:
     description: "Permanent night vision"
     permission: cvranks.mining.nightstalker
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /ns [on|off]"
     aliases:
       - night
       - ns
@@ -64,7 +59,6 @@ commands:
     description: "Instantly turn cobblestone into stone when placing it"
     permission: cvranks.build.stonemason
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /mason [on|off]"
     aliases:
       - mason
   
@@ -72,7 +66,6 @@ commands:
     description: "Instantly turn dirt to mycelium when placing it"
     permission: cvranks.build.mushgardener
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /mush [on|off]"
     aliases:
       - mush
   
@@ -80,7 +73,6 @@ commands:
     description: "Instantly turn (soft) clay blocks into brick blocks when placing them"
     permission: cvranks.build.bricklayer
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /brick [on|off]"
     aliases:
       - brick
   
@@ -88,29 +80,26 @@ commands:
     description: "Instantly turn sand to glass and soul sand to obsidian when placing them"
     permission: cvranks.build.carpenter
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /carp [on|off]"
     aliases:
       - carpenter
       - carp
+      - mcarpenter
       - mcarp
   
   # Death Chain Commands
   xpert:
     description: "Check the amount of time remaining until your Xpert ability is ready to use"
-    usage: "§cSyntax: /xpert time"
     aliases:
       - expert
       - ex
   
   keepsake:
     description: "Check the amount of time remaining until your Keepsake ability is ready to use"
-    usage: "§cSyntax: /ks time"
     aliases:
       - ks
   
   deathhound:
     description: "Send the coordinates of self/another player's last death to self/the player, respectively"
-    usage: "§cSyntax: /dh <list|time|me|[player]>"
     aliases:
       - dh
   
@@ -118,24 +107,27 @@ commands:
     description: "Teleports self back to the latest death point"
     permission: cvranks.death.respawn
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /respawn [time]"
   
   # Other Non-Chain Commands
   wood:
     description: "Managing the bonus wood rank"
     permission: cvranks.mining.ps.logs
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /wood notify [on|off]"
   
   scuba:
     description: "Permanent underwater breathing"
     permission: cvranks.service.scuba
     permission-message: "§cYou do not have permission to execute this command."
-    usage: "§cSyntax: /scuba [on|off]"
+  
+  leatherworker:
+    description: "Managing the leatherworker rank"
+    permission: cvranks.leatherworker
+    permission-message: "§cYou do not have permission to execute this command."
+    aliases:
+      - leather
   
   minirank:
     description: "View and/or toggle minirank abilities (dirt -> mycelium / sand -> glass / soul sand -> obsidian)"
-    usage: "§cSyntax: /mr [mycelium|glass|obsidian [on|off]]"
     aliases:
       - mr
 
@@ -144,7 +136,7 @@ permissions:
   
   # Service Chain Permissions
   cvranks.service.dr:
-    description: "Allows the player to use the 'time', 'me', and '<player>' subcommands of the '/doctor' command"
+    description: "Allows the player to use the 'time', 'me', '<player>', and 'notify' subcommands of the '/doctor' command"
     default: op
   
   cvranks.service.dr.master:
@@ -153,10 +145,6 @@ permissions:
   
   cvranks.service.dr.hidefromlist:
     description: "Allows the player to not appear on the list seen when '/doctor list' is run"
-    default: op
-  
-  cvranks.service.dr.notifyoptout:
-    description: "Allows the player to not be notified when someone uses their doctor ability"
     default: op
   
   cvranks.service.repairman:
@@ -232,10 +220,6 @@ permissions:
   
   cvranks.death.hound.hidefromlist:
     description: "Allows the player to not appear on the list seen when '/deathhound list' is run"
-    default: op
-  
-  cvranks.death.hound.notifyoptout:
-    description: "Allows the player to not be notified when someone uses their death hound ability or when they use their respawn ability"
     default: op
   
   cvranks.death.respawn:
