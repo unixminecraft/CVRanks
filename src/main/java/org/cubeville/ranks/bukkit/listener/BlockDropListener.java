@@ -1,6 +1,5 @@
 package org.cubeville.ranks.bukkit.listener;
 
-import java.util.Iterator;
 import java.util.Random;
 import java.util.UUID;
 import org.bukkit.Location;
@@ -10,35 +9,25 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDropItemEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerCommandSendEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.cubeville.ranks.bukkit.CVRanksPlugin;
 import org.jetbrains.annotations.NotNull;
 
-public final class CVRanksEventListener implements Listener {
+public final class BlockDropListener implements Listener {
     
     private final CVRanksPlugin plugin;
     private final Random random;
     
-    public CVRanksEventListener(@NotNull final CVRanksPlugin plugin) {
+    public BlockDropListener(@NotNull final CVRanksPlugin plugin) {
+        
         this.plugin = plugin;
         this.random = new Random();
     }
-    
-    ///////////////////////
-    // BONUS BLOCK DROPS //
-    ///////////////////////
     
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockDropItem(@NotNull final BlockDropItemEvent event) {
@@ -122,6 +111,8 @@ public final class CVRanksEventListener implements Listener {
                 case JUNGLE_LOG:
                 case CRIMSON_HYPHAE:
                 case WARPED_HYPHAE:
+                case CHERRY_LOG:
+                case MANGROVE_LOG:
                 case STRIPPED_OAK_LOG:
                 case STRIPPED_BIRCH_LOG:
                 case STRIPPED_SPRUCE_LOG:
@@ -130,6 +121,8 @@ public final class CVRanksEventListener implements Listener {
                 case STRIPPED_JUNGLE_LOG:
                 case STRIPPED_CRIMSON_HYPHAE:
                 case STRIPPED_WARPED_HYPHAE:
+                case STRIPPED_CHERRY_LOG:
+                case STRIPPED_MANGROVE_LOG:
                     break;
                 default:
                     continue;
@@ -440,170 +433,5 @@ public final class CVRanksEventListener implements Listener {
             default:
                 return 0;
         }
-    }
-    
-    //////////////////////////////
-    // BLOCK PLACEMENT CHANGING //
-    //////////////////////////////
-    
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onBlockPlace(@NotNull final BlockPlaceEvent event) {
-        
-        final UUID playerId = event.getPlayer().getUniqueId();
-        final Block block = event.getBlockPlaced();
-        
-        switch (block.getType()) {
-            case COBBLESTONE:
-                if (this.plugin.isStoneMasonEnabled(playerId)) {
-                    block.setType(Material.STONE);
-                }
-                break;
-            case DIRT:
-                if (this.plugin.isMushGardenerEnabled(playerId) || this.plugin.isMiniRankMyceliumEnabled(playerId)) {
-                    block.setType(Material.MYCELIUM);
-                }
-                break;
-            case CLAY:
-                if (this.plugin.isBrickLayerEnabled(playerId)) {
-                    block.setType(Material.BRICKS);
-                }
-                break;
-            case SAND:
-                if (this.plugin.isMasterCarpenterEnabled(playerId) || this.plugin.isMiniRankGlassEnabled(playerId)) {
-                    block.setType(Material.GLASS);
-                }
-                break;
-            case SOUL_SAND:
-                if (this.plugin.isMasterCarpenterEnabled(playerId) || this.plugin.isMiniRankObsidianEnabled(playerId)) {
-                    block.setType(Material.OBSIDIAN);
-                }
-                break;
-            default:
-                // Do nothing.
-        }
-    }
-    
-    ////////////////////
-    // LEATHER WORKER //
-    ////////////////////
-    
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onEntityDeath(@NotNull final EntityDeathEvent event) {
-        
-        final LivingEntity entity = event.getEntity();
-        final Player killer = entity.getKiller();
-        if (killer == null || !killer.hasPermission("cvranks.leatherworker")) {
-            return;
-        }
-        
-        switch (entity.getType()) {
-            case COW:
-            case MUSHROOM_COW:
-            case HORSE:
-            case DONKEY:
-            case MULE:
-            case LLAMA:
-                break;
-            default:
-                return;
-        }
-        
-        entity.getWorld().dropItemNaturally(entity.getLocation(), new ItemStack(Material.LEATHER));
-        if (!this.plugin.isNotifyLeatherDisabled(killer.getUniqueId())) {
-            killer.sendMessage("§aYou got an extra piece of leather.");
-        }
-    }
-    
-    ////////////////////////////////////
-    // COMMAND TAB-COMPLETION UPDATES //
-    ////////////////////////////////////
-    
-    @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerCommandSend(@NotNull final PlayerCommandSendEvent event) {
-        event.getCommands().removeAll(this.plugin.onPlayerCommandSend(event.getPlayer()));
-    }
-    
-    ///////////////////////////
-    // PLAYER DEATH HANDLING //
-    ///////////////////////////
-    
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerDeath(@NotNull final PlayerDeathEvent event) {
-        
-        final Player player = event.getEntity();
-        final UUID playerId = player.getUniqueId();
-        
-        final boolean keepExperience;
-        if (player.hasPermission("cvranks.death.te.admin")) {
-            keepExperience = true;
-        } else if (player.hasPermission("cvranks.death.te") && this.plugin.getXpertWaitTime(playerId) == 0L) {
-            keepExperience = true;
-            this.plugin.xpertUsed(playerId);
-        } else {
-            keepExperience = false;
-        }
-        
-        if (keepExperience) {
-            event.setKeepLevel(true);
-            event.setDroppedExp(0);
-            player.sendMessage("§aYour Xpert ability has been triggered, and you have kept your XP.");
-        }
-        
-        final boolean keepInventory;
-        if (player.hasPermission("cvranks.death.ks.admin")) {
-            keepInventory = true;
-        } else if (player.hasPermission("cvranks.death.ks") && this.plugin.getKeepsakeWaitTime(playerId) == 0L) {
-            keepInventory = true;
-            this.plugin.keepsakeUsed(playerId);
-        } else {
-            keepInventory = false;
-        }
-        
-        if (keepInventory) {
-            event.setKeepInventory(true);
-            event.getDrops().clear();
-            
-            final Iterator<ItemStack> iterator = player.getInventory().iterator();
-            while (iterator.hasNext()) {
-                final ItemStack item = iterator.next();
-                if (item != null && item.getEnchantmentLevel(Enchantment.VANISHING_CURSE) > 0) {
-                    iterator.remove();
-                }
-            }
-            
-            player.sendMessage("§aYour Keepsake ability has been triggered, and you have kept your inventory.");
-        }
-        
-        this.plugin.addPendingDeathHoundNotification(playerId);
-        this.plugin.addDeathLocation(playerId, player.getLocation());
-    }
-    
-    /////////////////////////////////////////
-    // GENERAL ABILITY TIMER NOTIFICATIONS //
-    /////////////////////////////////////////
-    
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerJoin(@NotNull final PlayerJoinEvent event) {
-        
-        final UUID playerId = event.getPlayer().getUniqueId();
-        
-        this.plugin.checkDoctorResetNotification(playerId);
-        this.plugin.checkRepairResetNotification(playerId);
-        this.plugin.checkXpertResetNotification(playerId);
-        this.plugin.checkKeepsakeResetNotification(playerId);
-        this.plugin.checkDeathHoundResetNotification(playerId);
-        this.plugin.checkRespawnResetNotification(playerId);
-    }
-    
-    /////////////////////////////
-    // PLAYER RESPAWN HANDLING //
-    /////////////////////////////
-    
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerRespawn(@NotNull final PlayerRespawnEvent event) {
-        
-        final UUID respawnPlayerId = event.getPlayer().getUniqueId();
-        this.plugin.disableNightStalker(respawnPlayerId);
-        this.plugin.disableScuba(respawnPlayerId);
     }
 }

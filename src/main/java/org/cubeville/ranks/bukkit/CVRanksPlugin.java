@@ -29,6 +29,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -51,9 +52,14 @@ import org.cubeville.ranks.bukkit.command.other.WoodCommand;
 import org.cubeville.ranks.bukkit.command.service.DoctorCommand;
 import org.cubeville.ranks.bukkit.command.service.LevelCommand;
 import org.cubeville.ranks.bukkit.command.service.RepairCommand;
-import org.cubeville.ranks.bukkit.listener.CVRanksEventListener;
+import org.cubeville.ranks.bukkit.listener.BlockDropListener;
+import org.cubeville.ranks.bukkit.listener.BlockPlaceListener;
+import org.cubeville.ranks.bukkit.listener.DeathListener;
+import org.cubeville.ranks.bukkit.listener.EntityListener;
+import org.cubeville.ranks.bukkit.listener.GeneralListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 public final class CVRanksPlugin extends JavaPlugin {
     
@@ -423,7 +429,12 @@ public final class CVRanksPlugin extends JavaPlugin {
         // EVENT LISTENER REGISTRATION //
         /////////////////////////////////
         
-        this.server.getPluginManager().registerEvents(new CVRanksEventListener(this), this);
+        final PluginManager pluginManager = this.server.getPluginManager();
+        pluginManager.registerEvents(new BlockDropListener(this), this);
+        pluginManager.registerEvents(new BlockPlaceListener(this), this);
+        pluginManager.registerEvents(new DeathListener(this), this);
+        pluginManager.registerEvents(new EntityListener(this), this);
+        pluginManager.registerEvents(new GeneralListener(this), this);
         
         //////////////////////////////////
         // CRAFTING RECIPE REGISTRATION //
@@ -500,7 +511,7 @@ public final class CVRanksPlugin extends JavaPlugin {
             this.logger.log(Level.INFO, "Successfully registered enchantment " + enchantmentName + ".");
         }
         
-        this.logger.log(Level.INFO, "Load Enchantments for Leveling - STARTING");
+        this.logger.log(Level.INFO, "Load Enchantments for Leveling - FINISHED");
     }
     
     public void reloadDisabledNotifications() throws RuntimeException {
@@ -786,6 +797,7 @@ public final class CVRanksPlugin extends JavaPlugin {
     }
     
     @NotNull
+    @UnmodifiableView
     public Set<UUID> getDeathLocationIds() {
         return Collections.unmodifiableSet(this.deathLocations.keySet());
     }
