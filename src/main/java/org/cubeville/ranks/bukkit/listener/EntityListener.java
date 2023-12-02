@@ -35,6 +35,8 @@ public final class EntityListener implements Listener {
             case DONKEY:
             case MULE:
             case LLAMA:
+            case TRADER_LLAMA:
+            case HOGLIN:
                 break;
             default:
                 return;
