@@ -1,6 +1,6 @@
 main: org.cubeville.ranks.bukkit.CVRanksPlugin
 name: CVRanks
-version: 1.20.1
+version: 1.20.2
 description: "A plugin to add extra in-game perks and abilities to enhance the game"
 api-version: '1.20'
 authors:
@@ -12,7 +12,21 @@ authors:
 # WOO COMMANDS
 commands:
   
+  # General Commands
+  rank:
+    description: "General ranks command"
+    aliases:
+      - ranks
+      - cvrank
+      - cvranks
+  
   # Service Chain Commands
+  shopkeeper:
+    description: "Checks who online has the shopkeeper rank"
+    aliases:
+      - shop
+      - sk
+  
   doctor:
     description: "Heal self or another player"
     aliases:
@@ -135,6 +149,10 @@ commands:
 permissions:
   
   # Service Chain Permissions
+  cvranks.service.shopkeeper.hidefromlist:
+    description: "Allows the player to not appear on the list seen when '/shopkeeper list' is run"
+    default: op
+  
   cvranks.service.dr:
     description: "Allows the player to use the 'time', 'me', '<player>', and 'notify' subcommands of the '/doctor' command"
     default: op

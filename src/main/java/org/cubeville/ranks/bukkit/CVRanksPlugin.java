@@ -42,6 +42,7 @@ import org.cubeville.ranks.bukkit.command.death.DeathHoundCommand;
 import org.cubeville.ranks.bukkit.command.death.KeepsakeCommand;
 import org.cubeville.ranks.bukkit.command.death.RespawnCommand;
 import org.cubeville.ranks.bukkit.command.death.XpertCommand;
+import org.cubeville.ranks.bukkit.command.general.RankCommand;
 import org.cubeville.ranks.bukkit.command.mining.InstaSmeltCommand;
 import org.cubeville.ranks.bukkit.command.mining.NightStalkerCommand;
 import org.cubeville.ranks.bukkit.command.mining.ProspectorCommand;
@@ -52,6 +53,7 @@ import org.cubeville.ranks.bukkit.command.other.WoodCommand;
 import org.cubeville.ranks.bukkit.command.service.DoctorCommand;
 import org.cubeville.ranks.bukkit.command.service.LevelCommand;
 import org.cubeville.ranks.bukkit.command.service.RepairCommand;
+import org.cubeville.ranks.bukkit.command.service.ShopkeeperCommand;
 import org.cubeville.ranks.bukkit.listener.BlockDropListener;
 import org.cubeville.ranks.bukkit.listener.BlockPlaceListener;
 import org.cubeville.ranks.bukkit.listener.DeathListener;
@@ -406,6 +408,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         // COMMAND REGISTRATION //
         //////////////////////////
         
+        this.registerCommand("rank", new RankCommand());
+        this.registerCommand("shopkeeper", new ShopkeeperCommand(this));
         this.registerCommand("doctor", new DoctorCommand(this));
         this.registerCommand("level", new LevelCommand(this));
         this.registerCommand("repair", new RepairCommand(this));
