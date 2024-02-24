@@ -46,6 +46,8 @@ public final class BlockDropListener implements Listener {
             case JUNGLE_LOG:
             case CRIMSON_HYPHAE:
             case WARPED_HYPHAE:
+            case CHERRY_LOG:
+            case MANGROVE_LOG:
             case STRIPPED_OAK_LOG:
             case STRIPPED_BIRCH_LOG:
             case STRIPPED_SPRUCE_LOG:
@@ -54,6 +56,8 @@ public final class BlockDropListener implements Listener {
             case STRIPPED_JUNGLE_LOG:
             case STRIPPED_CRIMSON_HYPHAE:
             case STRIPPED_WARPED_HYPHAE:
+            case STRIPPED_CHERRY_LOG:
+            case STRIPPED_MANGROVE_LOG:
                 this.onBlockDropItemWood(event);
                 break;
             
