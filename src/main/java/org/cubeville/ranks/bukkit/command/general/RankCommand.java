@@ -108,7 +108,7 @@ public final class RankCommand extends PlayerCommand {
         ranks.add(this.getRank(sender, "Doctor Plus", "cvranks.service.dr.master", showAll));
         ranks.add(this.getRank(sender, "Repairman", "cvranks.service.repairman", showAll));
         ranks.add(this.getRank(sender, "Repairman Plus", "cvranks.service.repairman.master", showAll));
-        ranks.add(this.getRank(sender, "Servicemaster", "", showAll));
+        ranks.add(this.getRank(sender, "Servicemaster", "group.rank_service_servicemaster", showAll));
         ranks.add(this.getRank(sender, "Prospector", "cvranks.mining.ps", showAll));
         ranks.add(this.getRank(sender, "Instasmelt", "cvranks.mining.instasmelt", showAll));
         ranks.add(this.getRank(sender, "Night Stalker", "cvranks.mining.nightstalker", showAll));
