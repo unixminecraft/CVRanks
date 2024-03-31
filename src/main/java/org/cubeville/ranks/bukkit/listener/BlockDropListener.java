@@ -44,8 +44,8 @@ public final class BlockDropListener implements Listener {
             case DARK_OAK_LOG:
             case ACACIA_LOG:
             case JUNGLE_LOG:
-            case CRIMSON_HYPHAE:
-            case WARPED_HYPHAE:
+            case CRIMSON_STEM:
+            case WARPED_STEM:
             case CHERRY_LOG:
             case MANGROVE_LOG:
             case STRIPPED_OAK_LOG:
@@ -54,8 +54,8 @@ public final class BlockDropListener implements Listener {
             case STRIPPED_DARK_OAK_LOG:
             case STRIPPED_ACACIA_LOG:
             case STRIPPED_JUNGLE_LOG:
-            case STRIPPED_CRIMSON_HYPHAE:
-            case STRIPPED_WARPED_HYPHAE:
+            case STRIPPED_CRIMSON_STEM:
+            case STRIPPED_WARPED_STEM:
             case STRIPPED_CHERRY_LOG:
             case STRIPPED_MANGROVE_LOG:
                 this.onBlockDropItemWood(event);
@@ -113,8 +113,8 @@ public final class BlockDropListener implements Listener {
                 case DARK_OAK_LOG:
                 case ACACIA_LOG:
                 case JUNGLE_LOG:
-                case CRIMSON_HYPHAE:
-                case WARPED_HYPHAE:
+                case CRIMSON_STEM:
+                case WARPED_STEM:
                 case CHERRY_LOG:
                 case MANGROVE_LOG:
                 case STRIPPED_OAK_LOG:
@@ -123,8 +123,8 @@ public final class BlockDropListener implements Listener {
                 case STRIPPED_DARK_OAK_LOG:
                 case STRIPPED_ACACIA_LOG:
                 case STRIPPED_JUNGLE_LOG:
-                case STRIPPED_CRIMSON_HYPHAE:
-                case STRIPPED_WARPED_HYPHAE:
+                case STRIPPED_CRIMSON_STEM:
+                case STRIPPED_WARPED_STEM:
                 case STRIPPED_CHERRY_LOG:
                 case STRIPPED_MANGROVE_LOG:
                     break;
