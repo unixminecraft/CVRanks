@@ -148,6 +148,11 @@ commands:
 # WOO PERMISSIONS
 permissions:
   
+  # General Permissions
+  cvranks.general.list.other:
+    description: "Allows the player to view the rank list of other players"
+    default: op
+  
   # Service Chain Permissions
   cvranks.service.shopkeeper.hidefromlist:
     description: "Allows the player to not appear on the list seen when '/shopkeeper list' is run"

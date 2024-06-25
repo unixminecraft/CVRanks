@@ -30,7 +30,7 @@ public final class DeathListener implements Listener {
         final boolean keepExperience;
         if (player.hasPermission("cvranks.death.te.admin")) {
             keepExperience = true;
-        } else if (player.hasPermission("cvranks.death.te") && this.plugin.getXpertWaitTime(playerId) == 0L) {
+        } else if (player.hasPermission("cvranks.death.te") && this.plugin.getXpertWaitTime(playerId) == 0L && event.getDroppedExp() != 0) {
             keepExperience = true;
             this.plugin.xpertUsed(playerId);
         } else {
@@ -46,7 +46,7 @@ public final class DeathListener implements Listener {
         final boolean keepInventory;
         if (player.hasPermission("cvranks.death.ks.admin")) {
             keepInventory = true;
-        } else if (player.hasPermission("cvranks.death.ks") && this.plugin.getKeepsakeWaitTime(playerId) == 0L) {
+        } else if (player.hasPermission("cvranks.death.ks") && this.plugin.getKeepsakeWaitTime(playerId) == 0L && !event.getDrops().isEmpty()) {
             keepInventory = true;
             this.plugin.keepsakeUsed(playerId);
         } else {

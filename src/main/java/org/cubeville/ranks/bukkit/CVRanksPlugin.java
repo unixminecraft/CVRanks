@@ -408,7 +408,7 @@ public final class CVRanksPlugin extends JavaPlugin {
         // COMMAND REGISTRATION //
         //////////////////////////
         
-        this.registerCommand("rank", new RankCommand());
+        this.registerCommand("rank", new RankCommand(this));
         this.registerCommand("shopkeeper", new ShopkeeperCommand(this));
         this.registerCommand("doctor", new DoctorCommand(this));
         this.registerCommand("level", new LevelCommand(this));
