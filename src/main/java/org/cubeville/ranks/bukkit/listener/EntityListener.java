@@ -30,7 +30,7 @@ public final class EntityListener implements Listener {
         
         switch (entity.getType()) {
             case COW:
-            case MUSHROOM_COW:
+            case MOOSHROOM:
             case HORSE:
             case DONKEY:
             case MULE:

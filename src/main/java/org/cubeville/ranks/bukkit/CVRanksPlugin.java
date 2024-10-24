@@ -1,5 +1,7 @@
 package org.cubeville.ranks.bukkit;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -457,7 +459,7 @@ public final class CVRanksPlugin extends JavaPlugin {
         
         for (final String enchantmentName : config.getKeys(false)) {
             
-            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentName.toLowerCase()));
+            Enchantment enchantment = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).get(NamespacedKey.minecraft(enchantmentName.toLowerCase()));
             if (enchantment == null) {
                 // Backwards compatibility
                 enchantment = Enchantment.getByName(enchantmentName);
