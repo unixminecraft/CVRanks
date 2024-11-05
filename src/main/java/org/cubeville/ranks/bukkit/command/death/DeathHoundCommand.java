@@ -177,6 +177,7 @@ public final class DeathHoundCommand extends PlayerCommand {
             } else {
                 sender.sendMessage("§cPlease wait until§r §6" + target.getName() + "§r §chas respawned to use your death hound ability on them.");
                 sender.sendMessage("§cYou will get a notification when they respawn.");
+                this.plugin.addPendingDeathHoundRespawnNotification(targetId, senderId);
             }
             return true;
         }

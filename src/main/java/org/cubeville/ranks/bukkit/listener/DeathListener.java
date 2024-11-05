@@ -1,7 +1,6 @@
 package org.cubeville.ranks.bukkit.listener;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.enchantments.Enchantment;
@@ -85,8 +84,7 @@ public final class DeathListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerRespawn(@NotNull final PlayerRespawnEvent event) {
         
-        final UUID respawnPlayerId = event.getPlayer().getUniqueId();
-        this.plugin.disableNightStalker(respawnPlayerId);
-        this.plugin.disableScuba(respawnPlayerId);
+        final Player respawnPlayer = event.getPlayer();
+        this.plugin.notifyPendingDeathHoundRespawn(respawnPlayer);
     }
 }

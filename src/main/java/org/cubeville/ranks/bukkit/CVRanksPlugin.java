@@ -97,70 +97,73 @@ public final class CVRanksPlugin extends JavaPlugin {
     private static final String ACTIVE_MINI_RANK_GLASS = "active_mini_rank_glass";
     private static final String ACTIVE_MINI_RANK_OBSIDIAN = "active_mini_rank_obsidian";
     
-    private Logger logger;
+    private final Logger logger;
     
     private File dataFolder;
-    private File enchantmentFile;
     private File disabledNotificationsFile;
     private File activeRanksFile;
     
     private long uptime; // Used for notifying when abilities can be used again.
-    private Server server;
-    private BukkitScheduler scheduler;
+    private final Server server;
+    private final BukkitScheduler scheduler;
     
     /* EXTENDED ENCHANTMENTS */
-    private Map<Enchantment, ExtendedEnchantment> byEnchantment;
-    private Map<String, ExtendedEnchantment> byName;
+    private final Map<Enchantment, ExtendedEnchantment> byEnchantment;
+    private final Map<String, ExtendedEnchantment> byName;
     
     /* GENERIC / NON-PERK RELATED */
-    private Map<UUID, Location> deathLocations;
-    private Set<UUID> pendingDeathHoundNotifications;
+    private final Map<UUID, Location> deathLocations;
+    private final Set<UUID> pendingDeathHoundNotifications;
+    private final Map<UUID, Set<UUID>> pendingDeathHoundRespawnNotifications;
     
     /* SERVICE CHAIN */
-    private Map<UUID, Long> doctorLastUsed;
-    private Set<UUID> notifyDoctorReset;
-    private Set<UUID> notifyDoctorDisabled;
-    private Map<UUID, Long> repairLastUsed;
-    private Set<UUID> notifyRepairReset;
+    private final Map<UUID, Long> doctorLastUsed;
+    private final Set<UUID> notifyDoctorReset;
+    private final Set<UUID> notifyDoctorDisabled;
+    private final Map<UUID, Long> repairLastUsed;
+    private final Set<UUID> notifyRepairReset;
     
     /* MINING CHAIN */
-    private Set<UUID> notifyCoalDisabled;
-    private Set<UUID> notifyQuartzDisabled;
-    private Set<UUID> notifyDiamondDisabled;
-    private Set<UUID> notifyFlintDisabled;
-    private Set<UUID> instaSmeltActive;
-    private Set<UUID> notifyIronDisabled;
-    private Set<UUID> notifyGoldDisabled;
-    private Set<UUID> notifyCopperDisabled;
-    private Set<UUID> nightStalkerActive;
+    private final Set<UUID> notifyCoalDisabled;
+    private final Set<UUID> notifyQuartzDisabled;
+    private final Set<UUID> notifyDiamondDisabled;
+    private final Set<UUID> notifyFlintDisabled;
+    private final Set<UUID> instaSmeltActive;
+    private final Set<UUID> notifyIronDisabled;
+    private final Set<UUID> notifyGoldDisabled;
+    private final Set<UUID> notifyCopperDisabled;
+    private final Set<UUID> nightStalkerActive;
     
     /* BUILD CHAIN */
-    private Set<UUID> stoneMasonActive;
-    private Set<UUID> mushGardenerActive;
-    private Set<UUID> brickLayerActive;
-    private Set<UUID> masterCarpenterActive;
+    private final Set<UUID> stoneMasonActive;
+    private final Set<UUID> mushGardenerActive;
+    private final Set<UUID> brickLayerActive;
+    private final Set<UUID> masterCarpenterActive;
     
     /* DEATH CHAIN */
-    private Map<UUID, Long> xpertLastUsed;
-    private Set<UUID> notifyXpertReset;
-    private Map<UUID, Long> keepsakeLastUsed;
-    private Set<UUID> notifyKeepsakeReset;
-    private Map<UUID, Long> deathHoundLastUsed;
-    private Set<UUID> notifyDeathHoundReset;
-    private Set<UUID> notifyDeathHoundDisabled;
-    private Map<UUID, Long> respawnLastUsed;
-    private Set<UUID> notifyRespawnReset;
+    private final Map<UUID, Long> xpertLastUsed;
+    private final Set<UUID> notifyXpertReset;
+    private final Map<UUID, Long> keepsakeLastUsed;
+    private final Set<UUID> notifyKeepsakeReset;
+    private final Map<UUID, Long> deathHoundLastUsed;
+    private final Set<UUID> notifyDeathHoundReset;
+    private final Set<UUID> notifyDeathHoundDisabled;
+    private final Map<UUID, Long> respawnLastUsed;
+    private final Set<UUID> notifyRespawnReset;
     
     /* NON-CHAIN / OTHER */
-    private Set<UUID> notifyWoodDisabled;
-    private Set<UUID> scubaActive;
-    private Set<UUID> notifyLeatherDisabled;
-    private Set<UUID> miniRankMyceliumActive;
-    private Set<UUID> miniRankGlassActive;
-    private Set<UUID> miniRankObsidianActive;
+    private final Set<UUID> notifyWoodDisabled;
+    private final Set<UUID> scubaActive;
+    private final Set<UUID> notifyLeatherDisabled;
+    private final Set<UUID> miniRankMyceliumActive;
+    private final Set<UUID> miniRankGlassActive;
+    private final Set<UUID> miniRankObsidianActive;
     
-    @Override
-    public void onEnable() {
+    /**
+     * Constructs the CV Ranks plugin.
+     */
+    public CVRanksPlugin() {
+        super();
         
         ////////////////////////////
         // GENERAL INITIALIZATION //
@@ -184,6 +187,7 @@ public final class CVRanksPlugin extends JavaPlugin {
         /* GENERIC / NON-PERK RELATED */
         this.deathLocations = new ConcurrentHashMap<UUID, Location>();
         this.pendingDeathHoundNotifications = new HashSet<UUID>();
+        this.pendingDeathHoundRespawnNotifications = new ConcurrentHashMap<UUID, Set<UUID>>();
         
         /* SERVICE CHAIN */
         this.doctorLastUsed = new ConcurrentHashMap<UUID, Long>();
@@ -227,6 +231,10 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.miniRankMyceliumActive = new HashSet<UUID>();
         this.miniRankGlassActive = new HashSet<UUID>();
         this.miniRankObsidianActive = new HashSet<UUID>();
+    }
+    
+    @Override
+    public void onEnable() {
         
         ///////////////////////////
         // CONFIGURATION LOADING //
@@ -300,14 +308,13 @@ public final class CVRanksPlugin extends JavaPlugin {
                     continue;
                 }
                 
-                iterator.remove();
-                
                 final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(ABILITY_READY_DOCTOR);
-                } else {
-                    this.notifyDoctorReset.add(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
                 }
+                
+                player.sendMessage(ABILITY_READY_DOCTOR);
+                iterator.remove();
             }
             
             // Repair
@@ -319,14 +326,13 @@ public final class CVRanksPlugin extends JavaPlugin {
                     continue;
                 }
                 
-                iterator.remove();
-                
                 final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(ABILITY_READY_REPAIR);
-                } else {
-                    this.notifyRepairReset.add(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
                 }
+                
+                player.sendMessage(ABILITY_READY_REPAIR);
+                iterator.remove();
             }
             
             // Xpert
@@ -338,14 +344,13 @@ public final class CVRanksPlugin extends JavaPlugin {
                     continue;
                 }
                 
-                iterator.remove();
-                
                 final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(ABILITY_READY_XPERT);
-                } else {
-                    this.notifyXpertReset.add(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
                 }
+                
+                player.sendMessage(ABILITY_READY_XPERT);
+                iterator.remove();
             }
             
             // Keepsake
@@ -357,14 +362,13 @@ public final class CVRanksPlugin extends JavaPlugin {
                     continue;
                 }
                 
-                iterator.remove();
-                
                 final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(ABILITY_READY_KEEPSAKE);
-                } else {
-                    this.notifyKeepsakeReset.add(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
                 }
+                
+                player.sendMessage(ABILITY_READY_KEEPSAKE);
+                iterator.remove();
             }
             
             // Death Hound
@@ -376,14 +380,13 @@ public final class CVRanksPlugin extends JavaPlugin {
                     continue;
                 }
                 
-                iterator.remove();
-                
                 final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(ABILITY_READY_DEATH_HOUND);
-                } else {
-                    this.notifyDeathHoundReset.add(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
                 }
+                
+                player.sendMessage(ABILITY_READY_DEATH_HOUND);
+                iterator.remove();
             }
             
             // Respawn
@@ -395,14 +398,13 @@ public final class CVRanksPlugin extends JavaPlugin {
                     continue;
                 }
                 
-                iterator.remove();
-                
                 final Player player = this.server.getPlayer(playerId);
-                if (player != null && player.isOnline()) {
-                    player.sendMessage(ABILITY_READY_RESPAWN);
-                } else {
-                    this.notifyRespawnReset.add(playerId);
+                if (player == null || !player.isOnline()) {
+                    continue;
                 }
+                
+                player.sendMessage(ABILITY_READY_RESPAWN);
+                iterator.remove();
             }
         }, 200L, 200L);
         
@@ -452,8 +454,8 @@ public final class CVRanksPlugin extends JavaPlugin {
     public void reloadEnchantments() throws RuntimeException {
         
         this.reloadDataFolder();
-        this.enchantmentFile = this.reloadFile("enchantments");
-        final ConfigurationSection config = this.loadConfig(this.enchantmentFile);
+        final File enchantmentFile = this.reloadFile("enchantments");
+        final ConfigurationSection config = this.loadConfig(enchantmentFile);
         
         this.logger.log(Level.INFO, "Load Enchantments for Leveling - STARTING");
         
@@ -492,25 +494,25 @@ public final class CVRanksPlugin extends JavaPlugin {
             
             check = this.byName.put(enchantment.getKey().getKey().toLowerCase(), extendedEnchantment);
             if (check != null && !check.getEnchantment().getKey().getKey().equals(enchantment.getKey().getKey())) {
-                logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
-                logger.log(Level.WARNING, "Already-registered: " + check.toString());
-                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+                this.logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
+                this.logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                this.logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
             }
             
             check = this.byName.put(enchantment.getName().toLowerCase(), extendedEnchantment);
             if (check != null && !check.getEnchantment().getKey().getKey().equals(enchantment.getKey().getKey())) {
-                logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
-                logger.log(Level.WARNING, "Already-registered: " + check.toString());
-                logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+                this.logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
+                this.logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                this.logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
             }
             
             for (final String name : extendedEnchantment.getNames()) {
                 
                 check = this.byName.put(name.toLowerCase(), extendedEnchantment);
                 if (check != null && !check.getEnchantment().getKey().getKey().equals(enchantment.getKey().getKey())) {
-                    logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
-                    logger.log(Level.WARNING, "Already-registered: " + check.toString());
-                    logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
+                    this.logger.log(Level.WARNING, "Duplicate registered by name for " + enchantmentName + ", overwriting with the new one.");
+                    this.logger.log(Level.WARNING, "Already-registered: " + check.toString());
+                    this.logger.log(Level.WARNING, "Newly-registered: " + extendedEnchantment.toString());
                 }
             }
             
@@ -828,9 +830,37 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.pendingDeathHoundNotifications.remove(playerId);
     }
     
+    public void addPendingDeathHoundRespawnNotification(@NotNull final UUID targetId, @NotNull final UUID senderId) {
+        
+        if (!this.pendingDeathHoundRespawnNotifications.containsKey(targetId)) {
+            this.pendingDeathHoundRespawnNotifications.put(targetId, new HashSet<UUID>());
+        }
+        this.pendingDeathHoundRespawnNotifications.get(targetId).add(senderId);
+    }
+    
+    public void notifyPendingDeathHoundRespawn(@NotNull final Player target) {
+        
+        final Set<UUID> senderIds = this.pendingDeathHoundRespawnNotifications.remove(target.getUniqueId());
+        if (senderIds == null) {
+            return;
+        }
+        
+        for (final UUID senderId : senderIds) {
+            
+            final Player sender = this.server.getPlayer(senderId);
+            if (sender == null || !sender.isOnline()) {
+                continue;
+            }
+            
+            sender.sendMessage("§6" + target.getName() + "§r §ahas respawned, you can send them their death coordinates.");
+        }
+    }
+    
     ///////////////////
     // SERVICE CHAIN //
     ///////////////////
+    
+    // DOCTOR //
     
     public long getDoctorWaitTime(@NotNull final UUID playerId) {
         
@@ -891,6 +921,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // REPAIR //
+    
     public long getRepairWaitTime(@NotNull final UUID playerId) {
         
         if (!this.repairLastUsed.containsKey(playerId)) {
@@ -932,6 +964,8 @@ public final class CVRanksPlugin extends JavaPlugin {
     // MINING CHAIN //
     //////////////////
     
+    // PROSPECTOR - COAL //
+    
     public boolean isNotifyCoalDisabled(@NotNull final UUID playerId) {
         return this.notifyCoalDisabled.contains(playerId);
     }
@@ -953,6 +987,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.notifyCoalDisabled, this.disabledNotificationsFile, DISABLE_NOTIFY_COAL, true, playerId);
         return true;
     }
+    
+    // PROSPECTOR - QUARTZ //
     
     public boolean isNotifyQuartzDisabled(@NotNull final UUID playerId) {
         return this.notifyQuartzDisabled.contains(playerId);
@@ -976,6 +1012,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // PROSPECTOR - DIAMOND //
+    
     public boolean isNotifyDiamondDisabled(@NotNull final UUID playerId) {
         return this.notifyDiamondDisabled.contains(playerId);
     }
@@ -997,6 +1035,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.notifyDiamondDisabled, this.disabledNotificationsFile, DISABLE_NOTIFY_DIAMOND, true, playerId);
         return true;
     }
+    
+    // PROSPECTOR - FLINT //
     
     public boolean isNotifyFlintDisabled(@NotNull final UUID playerId) {
         return this.notifyFlintDisabled.contains(playerId);
@@ -1020,6 +1060,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // INSTASMELT - GENERAL //
+    
     public boolean isInstaSmeltEnabled(@NotNull final UUID playerId) {
         return this.instaSmeltActive.contains(playerId);
     }
@@ -1041,6 +1083,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.instaSmeltActive, this.activeRanksFile, ACTIVE_INSTA_SMELT, false, playerId);
         return true;
     }
+    
+    // INSTASMELT - IRON //
     
     public boolean isNotifyIronDisabled(@NotNull final UUID playerId) {
         return this.notifyIronDisabled.contains(playerId);
@@ -1064,6 +1108,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // INSTASMELT - GOLD //
+    
     public boolean isNotifyGoldDisabled(@NotNull final UUID playerId) {
         return this.notifyGoldDisabled.contains(playerId);
     }
@@ -1086,6 +1132,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // INSTASMELT - COPPER //
+    
     public boolean isNotifyCopperDisabled(@NotNull final UUID playerId) {
         return this.notifyCopperDisabled.contains(playerId);
     }
@@ -1107,6 +1155,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.notifyCopperDisabled, this.disabledNotificationsFile, DISABLE_NOTIFY_COPPER, true, playerId);
         return true;
     }
+    
+    // NIGHTSTALKER //
     
     public boolean isNightStalkerEnabled(@NotNull final UUID playerId) {
         return this.nightStalkerActive.contains(playerId);
@@ -1134,6 +1184,8 @@ public final class CVRanksPlugin extends JavaPlugin {
     // BUILD CHAIN //
     /////////////////
     
+    // STONEMASON //
+    
     public boolean isStoneMasonEnabled(@NotNull final UUID playerId) {
         return this.stoneMasonActive.contains(playerId);
     }
@@ -1155,6 +1207,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.stoneMasonActive, this.activeRanksFile, ACTIVE_STONE_MASON, false, playerId);
         return true;
     }
+    
+    // MUSHGARDENER //
     
     public boolean isMushGardenerEnabled(@NotNull final UUID playerId) {
         return this.mushGardenerActive.contains(playerId);
@@ -1178,6 +1232,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // BRICKLAYER //
+    
     public boolean isBrickLayerEnabled(@NotNull final UUID playerId) {
         return this.brickLayerActive.contains(playerId);
     }
@@ -1199,6 +1255,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.brickLayerActive, this.activeRanksFile, ACTIVE_BRICK_LAYER, false, playerId);
         return true;
     }
+    
+    // MASTER CARPENTER //
     
     public boolean isMasterCarpenterEnabled(@NotNull final UUID playerId) {
         return this.masterCarpenterActive.contains(playerId);
@@ -1225,6 +1283,8 @@ public final class CVRanksPlugin extends JavaPlugin {
     /////////////////
     // DEATH CHAIN //
     /////////////////
+    
+    // XPERT //
     
     public long getXpertWaitTime(@NotNull final UUID playerId) {
         
@@ -1255,6 +1315,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         }
     }
     
+    // KEEPSAKE //
+    
     public long getKeepsakeWaitTime(@NotNull final UUID playerId) {
         
         if (!this.keepsakeLastUsed.containsKey(playerId)) {
@@ -1283,6 +1345,8 @@ public final class CVRanksPlugin extends JavaPlugin {
             }, 60L);
         }
     }
+    
+    // DEATH HOUND //
     
     public long getDeathHoundWaitTime(@NotNull final UUID playerId) {
         
@@ -1335,6 +1399,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // DEATH MASTER //
+    
     public long getRespawnWaitTime(@NotNull final UUID playerId) {
     
         if (!this.respawnLastUsed.containsKey(playerId)) {
@@ -1368,6 +1434,8 @@ public final class CVRanksPlugin extends JavaPlugin {
     // NON-CHAIN / OTHER //
     ///////////////////////
     
+    // EXTRA LOGS //
+    
     public boolean isNotifyWoodDisabled(@NotNull final UUID playerId) {
         return this.notifyWoodDisabled.contains(playerId);
     }
@@ -1389,6 +1457,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.notifyWoodDisabled, this.disabledNotificationsFile, DISABLE_NOTIFY_WOOD, true, playerId);
         return true;
     }
+    
+    // SCUBA //
     
     public boolean isScubaEnabled(@NotNull final UUID playerId) {
         return this.scubaActive.contains(playerId);
@@ -1412,6 +1482,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // LEATHER WORKER //
+    
     public boolean isNotifyLeatherDisabled(@NotNull final UUID playerId) {
         return this.notifyLeatherDisabled.contains(playerId);
     }
@@ -1433,6 +1505,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.notifyLeatherDisabled, this.disabledNotificationsFile, DISABLE_NOTIFY_LEATHER, true, playerId);
         return true;
     }
+    
+    // MINIRANKS - MYCELIUM //
     
     public boolean isMiniRankMyceliumEnabled(@NotNull final UUID playerId) {
         return this.miniRankMyceliumActive.contains(playerId);
@@ -1456,6 +1530,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         return true;
     }
     
+    // MINIRANKS - GLASS //
+    
     public boolean isMiniRankGlassEnabled(@NotNull final UUID playerId) {
         return this.miniRankGlassActive.contains(playerId);
     }
@@ -1477,6 +1553,8 @@ public final class CVRanksPlugin extends JavaPlugin {
         this.saveUpdatedPlayers(this.miniRankGlassActive, this.activeRanksFile, ACTIVE_MINI_RANK_GLASS, false, playerId);
         return true;
     }
+    
+    // MINIRANKS - OBSIDIAN //
     
     public boolean isMiniRankObsidianEnabled(@NotNull final UUID playerId) {
         return this.miniRankObsidianActive.contains(playerId);

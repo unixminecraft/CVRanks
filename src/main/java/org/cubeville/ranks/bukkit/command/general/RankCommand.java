@@ -130,6 +130,7 @@ public final class RankCommand extends PlayerCommand {
         ranks.add(this.getRank(target, "Leatherworker", "cvranks.leatherworker", showAll));
         ranks.add(this.getRank(target, "Woodworker", "cvranks.mining.ps.logs", showAll));
         ranks.add(this.getRank(target, "Home 2", "cvhome.home2", showAll));
+        ranks.add(this.getRank(target, "Home 3", "cvhome.home3", showAll));
         ranks.add(this.getRank(target, "Minirank Ore", "cvranks.mining.ps.ore", false));
         ranks.add(this.getRank(target, "Minirank Flint", "cvranks.mining.ps.flint", false));
         ranks.add(this.getRank(target, "Minirank Mycelium", "cvranks.mr.mycelium", false));
