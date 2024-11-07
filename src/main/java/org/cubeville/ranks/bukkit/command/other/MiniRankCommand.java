@@ -61,10 +61,10 @@ public final class MiniRankCommand extends PlayerCommand {
                 sender.sendMessage(" §f-§r §a/mr mycelium [" + (this.plugin.isMiniRankMyceliumEnabled(senderId) ? "off" : "on") + "]");
             }
             if (hasGlass) {
-                sender.sendMessage(" §f-§r §a/mr mycelium [" + (this.plugin.isMiniRankGlassEnabled(senderId) ? "off" : "on") + "]");
+                sender.sendMessage(" §f-§r §a/mr glass [" + (this.plugin.isMiniRankGlassEnabled(senderId) ? "off" : "on") + "]");
             }
             if (hasObsidian) {
-                sender.sendMessage(" §f-§r §a/mr mycelium [" + (this.plugin.isMiniRankObsidianEnabled(senderId) ? "off" : "on") + "]");
+                sender.sendMessage(" §f-§r §a/mr obsidian [" + (this.plugin.isMiniRankObsidianEnabled(senderId) ? "off" : "on") + "]");
             }
             sender.sendMessage("§8--------------------------------");
             return true;
