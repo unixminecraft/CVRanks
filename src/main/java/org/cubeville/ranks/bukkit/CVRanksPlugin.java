@@ -443,12 +443,6 @@ public final class CVRanksPlugin extends JavaPlugin {
         pluginManager.registerEvents(new DeathListener(this), this);
         pluginManager.registerEvents(new EntityListener(this), this);
         pluginManager.registerEvents(new GeneralListener(this), this);
-        
-        //////////////////////////////////
-        // CRAFTING RECIPE REGISTRATION //
-        //////////////////////////////////
-    
-        this.server.addRecipe(new ShapedRecipe(NamespacedKey.minecraft(Material.SADDLE.name().toLowerCase()), new ItemStack(Material.SADDLE)).shape("XXX", "XXX").setIngredient('X', Material.LEATHER));
     }
     
     public void reloadEnchantments() throws RuntimeException {
